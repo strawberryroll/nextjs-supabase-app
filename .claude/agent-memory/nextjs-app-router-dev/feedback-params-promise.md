@@ -15,9 +15,9 @@ Next.js 16부터 `params`와 `searchParams`가 `Promise` 타입으로 변경됨.
 export default async function Page({
   params,
 }: {
-  params: Promise<{ courseId: string }>
+  params: Promise<{ courseId: string }>;
 }) {
-  const { courseId } = await params
+  const { courseId } = await params;
 }
 ```
 

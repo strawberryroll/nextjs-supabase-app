@@ -8,6 +8,7 @@ metadata:
 `src/components/common/course-card.tsx`, `src/components/common/note-card.tsx`에 적용된 hover 스타일 컨벤션.
 
 카드 hover 시 공통 클래스:
+
 ```
 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:shadow-foreground/5 hover:ring-foreground/20
 ```

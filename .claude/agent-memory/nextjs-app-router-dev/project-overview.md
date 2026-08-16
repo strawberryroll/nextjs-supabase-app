@@ -12,6 +12,7 @@ Notion CMS 기반 강의 복습 노트 블로그. Phase 1(환경 설정)~Phase 2
 **How to apply:** Phase 4(SEO/태그 필터), Phase 5(배포) 남아있음. 다음 작업 시 ROADMAP.md 참고.
 
 구현 완료 파일:
+
 - `src/lib/notion.ts`: getCourses(), getNotes(), getNote(), Course/Note/BlockObjectResponse 타입
 - `src/app/page.tsx`: 강의 목록 Server Component (revalidate=60)
 - `src/app/courses/[courseId]/page.tsx`: 노트 목록

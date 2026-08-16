@@ -1,0 +1,31 @@
+# dependencies
+node_modules
+
+# Claude Code 로컬 설정 (에이전트/훅/커맨드 정의 — 포맷 대상 아님)
+.claude/
+
+# next.js
+.next/
+out/
+
+# production
+build
+
+# misc
+*.pem
+
+# env files
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# lock files
+package-lock.json
+
+# SQL은 별도 포매터 영역
+supabase/migrations/*.sql

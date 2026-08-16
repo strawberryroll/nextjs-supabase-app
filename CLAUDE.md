@@ -20,13 +20,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 명령어
 
 ```bash
-npm run dev      # 개발 서버 실행 (localhost:3000, Turbopack 기본 사용)
-npm run build    # 프로덕션 빌드
-npm run start    # 프로덕션 서버 실행
-npm run lint     # ESLint 실행 (next/core-web-vitals + next/typescript)
+npm run dev           # 개발 서버 실행 (localhost:3000, Turbopack 기본 사용)
+npm run build         # 프로덕션 빌드
+npm run start         # 프로덕션 서버 실행
+npm run lint          # ESLint 실행 (eslint-config-next + eslint-config-prettier)
+npm run format        # Prettier로 전체 코드 포맷
+npm run format:check  # Prettier 포맷 검사만 (CI용)
+npm run typecheck     # tsc --noEmit (tsconfig의 noEmit: true라 별도 스크립트 필요)
 ```
 
-테스트 러너, `typecheck`/`format` 스크립트는 아직 구성되어 있지 않다(타입 체크가 필요하면 `npx tsc --noEmit`).
+테스트 러너는 아직 구성되어 있지 않다.
+
+### ESLint 설정 시 주의 (Next.js 16)
+
+`eslint-config-next`는 16.x부터 **네이티브 flat config 배열을 default export**한다. `@eslint/eslintrc`의 `FlatCompat.extends("next/core-web-vitals", ...)`로 감싸면 `TypeError: Converting circular structure to JSON`이 발생하므로 쓰지 말 것. `eslint.config.mjs`는 다음과 같이 배열을 그대로 스프레드한다:
+
+```js
+import nextConfig from "eslint-config-next";
+import eslintConfigPrettier from "eslint-config-prettier";
+
+export default [...nextConfig, eslintConfigPrettier];
+```
+
+`.next/**`, `next-env.d.ts` 등 ignore 패턴은 `eslint-config-next` 자체에 이미 포함되어 있어 따로 지정할 필요 없다. 또한 Next.js 16에서 **`next lint` 명령이 완전히 제거**되었으므로(`next build`도 더 이상 린트를 실행하지 않음) 반드시 `eslint` CLI를 직접 호출할 것 — `next lint`를 스크립트나 git hook에 절대 쓰지 않는다.
+
+### Git hooks (Husky + lint-staged)
+
+`.husky/pre-commit`이 `npx lint-staged`를 실행해 스테이징된 파일만 `eslint --fix` + `prettier --write`로 자동 정리한다(`.lintstagedrc.json` 참고). 타입체크는 파일 단위 실행이 불가능해 pre-commit에 포함되지 않으므로, 커밋 전 필요시 수동으로 `npm run typecheck`를 실행할 것. `package.json`의 `prepare` 스크립트가 `npm install` 시 훅을 자동 설치한다.
+
+## 작업 완료 체크리스트
+
+코드를 변경한 뒤에는 다음을 순서대로 실행해 검증한다:
+
+- [ ] `npm run lint` — ESLint 에러 0건
+- [ ] `npm run typecheck` — 타입 에러 0건
+- [ ] `npm run format:check` — 실패 시 `npm run format`으로 정리 후 diff 검토
+- [ ] `npm run build` — 프로덕션 빌드 회귀 확인
+- [ ] UI를 변경했다면 `npm run dev`로 로컬 서버를 띄운 뒤 `mcp__playwright__*` 도구(`.mcp.json`에 등록된 playwright MCP)로 `localhost:3000`에 접속해 확인 — `browser_navigate`로 이동, `browser_snapshot`/`browser_take_screenshot`으로 상태 확인. 다크모드/반응형처럼 여러 상태를 봐야 하면 `browser_resize`, 테마 토글 클릭 등으로 상태를 바꿔가며 스냅샷을 반복 확인할 것
+
+커밋 시 `.husky/pre-commit`이 스테이징된 파일에 대해 `eslint --fix` + `prettier --write`를 자동 적용한다. 다만 타입체크·빌드는 훅에 포함되어 있지 않으므로 위 체크리스트를 커밋 전에 직접 실행해야 한다.
 
 ## 아키텍처
 
@@ -53,6 +85,7 @@ Next.js App Router + Supabase(`@supabase/ssr`)로 쿠키 기반 인증을 구현
 ### Supabase 프로젝트는 원격 전용
 
 `supabase/config.toml`이 없다 — 로컬 Supabase 스택(CLI)이 아니라 원격 프로젝트에 `supabase/migrations/*.sql`을 직접 관리하는 구조. 스키마 변경은 마이그레이션 파일을 추가하고 `mcp__supabase__apply_migration`(또는 Supabase 대시보드)으로 원격에 적용한다. 현재 `profiles` 테이블은:
+
 - `auth.users`와 1:1, `on_auth_user_created` 트리거(`handle_new_user`, `security definer`)로 회원가입 시 자동 생성
 - `handle_new_user()`는 PostgREST RPC로 직접 호출되지 않도록 `anon`/`authenticated`의 EXECUTE 권한을 revoke 처리(보안 어드바이저 경고 대응)
 - RLS 활성화: select는 공개, insert/update는 본인(`auth.uid() = id`)만 가능
@@ -60,7 +93,7 @@ Next.js App Router + Supabase(`@supabase/ssr`)로 쿠키 기반 인증을 구현
 
 ### UI 컴포넌트
 
-shadcn/ui("new-york" 스타일, `neutral` base color) + **TailwindCSS v3**(`^3.4.19`, `tailwind.config.ts` + `@tailwind` 디렉티브 방식 — v4의 CSS-first `@theme` 방식이 아님) + `next-themes`. `components.json`의 별칭: `@/components`, `@/components/ui`, `@/lib`, `@/hooks`(폴더는 아직 없음). 새 shadcn 컴포넌트는 `components/ui/`에, 도메인 컴포넌트는 `components/` 루트에 위치. 다크모드는 `tailwind.config.ts`의 `darkMode: ["class"]` + `next-themes`의 `attribute="class"` 조합.
+shadcn/ui("new-york" 스타일, `neutral` base color) + **TailwindCSS v3**(`^3.4.19`, `tailwind.config.ts` + `@tailwind` 디렉티브 방식 — v4의 CSS-first `@theme` 방식이 아님) + `next-themes`. `components.json`의 별칭: `@/components`, `@/components/ui`, `@/lib`, `@/hooks`(`hooks/`). 새 shadcn 컴포넌트는 `components/ui/`에, 도메인 컴포넌트는 `components/` 루트에, 커스텀 훅은 `hooks/`에 위치(예: `hooks/use-is-mounted.ts` — SSR/CSR hydration 불일치를 `useSyncExternalStore`로 처리하는 패턴, `useEffect`+`setState`로 mounted 플래그를 만들면 `react-hooks/set-state-in-effect` ESLint 규칙에 걸리므로 이 훅을 재사용할 것). 다크모드는 `tailwind.config.ts`의 `darkMode: ["class"]` + `next-themes`의 `attribute="class"` 조합.
 
 ### 문서
 

@@ -17,14 +17,14 @@
 
 ### 🔀 v3 vs v4 핵심 차이 (이 프로젝트는 v3)
 
-| 항목 | v4 (최신, 이 문서 기준) | v3 (이 프로젝트 실제 설정) |
-| --- | --- | --- |
-| 설치 | `npm install tailwindcss @tailwindcss/postcss` | `npm install tailwindcss postcss autoprefixer` |
-| PostCSS 설정 | `postcss.config.mjs`에 `"@tailwindcss/postcss": {}` | `postcss.config.mjs`에 `tailwindcss`, `autoprefixer` |
-| CSS 진입점 | `@import "tailwindcss";` | `@tailwind base; @tailwind components; @tailwind utilities;` |
-| 테마/토큰 설정 | CSS의 `@theme { --color-...: ...; }` | `tailwind.config.ts`의 `theme.extend` (JS 객체) |
-| 다크모드 선언 | CSS에서 `@custom-variant dark (&:where(.dark, .dark *));` | `tailwind.config.ts`의 `darkMode: ["class"]` |
-| 설정 파일 | 선택 사항(`@config` 지시어로 레거시 JS 설정도 병행 가능) | `tailwind.config.ts` 필수 |
+| 항목           | v4 (최신, 이 문서 기준)                                   | v3 (이 프로젝트 실제 설정)                                   |
+| -------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
+| 설치           | `npm install tailwindcss @tailwindcss/postcss`            | `npm install tailwindcss postcss autoprefixer`               |
+| PostCSS 설정   | `postcss.config.mjs`에 `"@tailwindcss/postcss": {}`       | `postcss.config.mjs`에 `tailwindcss`, `autoprefixer`         |
+| CSS 진입점     | `@import "tailwindcss";`                                  | `@tailwind base; @tailwind components; @tailwind utilities;` |
+| 테마/토큰 설정 | CSS의 `@theme { --color-...: ...; }`                      | `tailwind.config.ts`의 `theme.extend` (JS 객체)              |
+| 다크모드 선언  | CSS에서 `@custom-variant dark (&:where(.dark, .dark *));` | `tailwind.config.ts`의 `darkMode: ["class"]`                 |
+| 설정 파일      | 선택 사항(`@config` 지시어로 레거시 JS 설정도 병행 가능)  | `tailwind.config.ts` 필수                                    |
 
 ## 🚀 TailwindCSS v4 사용 규칙
 
@@ -112,8 +112,8 @@ Prettier 플러그인이 자동으로 정렬하지만, 수동 작성 시 다음 
 ### 기본 사용법
 
 ```tsx
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // ✅ shadcn/ui 컴포넌트 활용
 export function UserCard({ user }) {
@@ -126,7 +126,7 @@ export function UserCard({ user }) {
         <Button variant="outline">프로필 보기</Button>
       </CardContent>
     </Card>
-  )
+  );
 }
 ```
 
@@ -151,21 +151,21 @@ export function UserCard({ user }) {
 ### 컴포넌트 커스터마이징
 
 ```tsx
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 // ✅ 기존 컴포넌트 확장
 export function CustomButton({ className, ...props }) {
   return (
     <Button
       className={cn(
-        'transition-all duration-200',
-        'hover:-translate-y-0.5 hover:shadow-lg',
-        className
+        "transition-all duration-200",
+        "hover:-translate-y-0.5 hover:shadow-lg",
+        className,
       )}
       {...props}
     />
-  )
+  );
 }
 
 // ❌ 처음부터 새로 만들기
@@ -175,7 +175,7 @@ export function MyButton({ className, ...props }) {
       className="bg-blue-500... px-4 py-2" // 긴 클래스 나열
       {...props}
     />
-  )
+  );
 }
 ```
 
@@ -208,19 +208,19 @@ Tailwind v4는 다크모드를 CSS 안에서 `@custom-variant`로 선언한다. 
 >
 > ```typescript
 > // tailwind.config.ts (이 프로젝트의 실제 설정)
-> import type { Config } from 'tailwindcss'
+> import type { Config } from "tailwindcss";
 >
 > export default {
->   darkMode: ['class'],
+>   darkMode: ["class"],
 >   // ...
-> } satisfies Config
+> } satisfies Config;
 > ```
 
 ### next-themes 활용
 
 ```tsx
 // providers/theme-provider.tsx
-import { ThemeProvider as NextThemesProvider } from 'next-themes'
+import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 export function ThemeProvider({ children, ...props }) {
   return (
@@ -233,31 +233,31 @@ export function ThemeProvider({ children, ...props }) {
     >
       {children}
     </NextThemesProvider>
-  )
+  );
 }
 ```
 
 ### 테마 토글 컴포넌트
 
 ```tsx
-import { useTheme } from 'next-themes'
-import { Moon, Sun } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme();
 
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
-      <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-      <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
       <span className="sr-only">테마 전환</span>
     </Button>
-  )
+  );
 }
 ```
 
