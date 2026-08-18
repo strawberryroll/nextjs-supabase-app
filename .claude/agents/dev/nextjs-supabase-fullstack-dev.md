@@ -21,7 +21,8 @@ memory: project
 - **Next.js 16**: 훈련 데이터와 다른 breaking change 존재. 코드 작성 전 `node_modules/next/dist/docs/`의 관련 가이드를 반드시 확인한다 (`CLAUDE.md`/`AGENTS.md` 참고).
 - **패키지 매니저**: npm (pnpm 아님)
 - **디렉토리 구조**: `src/` 없이 루트에 `app/`, `components/`, `lib/`, `hooks/`
-- **스타일링**: TailwindCSS **v3**(`^3.4.19`, `tailwind.config.ts` + `@tailwind` 디렉티브 — v4 CSS-first 방식 아님) + shadcn/ui("new-york", neutral base) + `next-themes`
+- **스타일링**: TailwindCSS **v4**(`^4.3.3`, CSS-first — `app/globals.css`의 `@import "tailwindcss"` + `@theme`/`@custom-variant dark`, `tailwind.config.ts` 없음) + shadcn/ui("new-york", neutral base) + `next-themes`. 애니메이션은 `tw-animate-css`(`tailwindcss-animate` 아님)
+- **React Compiler**: `next.config.ts`의 `reactCompiler: true` + devDependency `babel-plugin-react-compiler`로 활성화됨. `watch()` 대신 `useWatch({ control, name })` 사용
 - **테스트 러너 없음** — 테스트 프레임워크 도입 관련 요청이 없는 한 임의로 추가하지 않는다
 
 ## Next.js 16 핵심 변경 사항
@@ -57,7 +58,7 @@ memory: project
 - 루트 `proxy.ts`가 거의 모든 경로에서 실행되며(matcher가 정적 파일/이미지 제외), 비로그인 사용자를 `/auth/login`으로 리다이렉트한다. 단 `/`, `/login*`, `/auth/*`는 예외.
 - `app/protected/`는 인증 사용자 전용. proxy의 체크는 "optimistic check"일 뿐이므로, Server Component 내부에서 반드시 `supabase.auth.getClaims()`로 재확인하고 실패 시 `redirect("/auth/login")` — 실제 데이터 접근 전 서버 재확인은 생략 불가.
 - `app/auth/`에 login, sign-up, forgot-password, update-password, sign-up-success, error, confirm(OTP 확인 Route Handler)이 있다.
-- 로그인/회원가입 폼은 react-hook-form 없이 `useState` + Supabase 브라우저 클라이언트 직접 호출 패턴을 쓴다(이 프로젝트 관례 — 임의로 react-hook-form을 도입하지 않는다).
+- 신규 폼은 react-hook-form + zod(`zodResolver`) + shadcn `Field`/`FieldLabel`/`FieldError`(`components/ui/field.tsx`) 패턴을 사용한다. 자세한 패턴은 `docs/guides/forms-react-hook-form.md` 참고. 기존 로그인/회원가입 폼(`components/login-form.tsx` 등)은 아직 `useState` + Supabase 브라우저 클라이언트 직접 호출 패턴으로 남아있으므로, 이 폼들을 수정할 때는 기존 패턴을 유지할지 react-hook-form으로 마이그레이션할지 사용자에게 확인한다.
 - `lib/utils.ts`의 `hasEnvVars`로 Supabase 환경변수 미설정 상태를 감지해 `EnvVarWarning`을 보여준다.
 
 ## Supabase 프로젝트는 원격 전용
