@@ -93,7 +93,7 @@ Next.js App Router + Supabase(`@supabase/ssr`)로 쿠키 기반 인증을 구현
 
 ### UI 컴포넌트
 
-shadcn/ui("new-york" 스타일, `neutral` base color) + **TailwindCSS v3**(`^3.4.19`, `tailwind.config.ts` + `@tailwind` 디렉티브 방식 — v4의 CSS-first `@theme` 방식이 아님) + `next-themes`. `components.json`의 별칭: `@/components`, `@/components/ui`, `@/lib`, `@/hooks`(`hooks/`). 새 shadcn 컴포넌트는 `components/ui/`에, 도메인 컴포넌트는 `components/` 루트에, 커스텀 훅은 `hooks/`에 위치(예: `hooks/use-is-mounted.ts` — SSR/CSR hydration 불일치를 `useSyncExternalStore`로 처리하는 패턴, `useEffect`+`setState`로 mounted 플래그를 만들면 `react-hooks/set-state-in-effect` ESLint 규칙에 걸리므로 이 훅을 재사용할 것). 다크모드는 `tailwind.config.ts`의 `darkMode: ["class"]` + `next-themes`의 `attribute="class"` 조합.
+shadcn/ui("new-york" 스타일, `neutral` base color) + **TailwindCSS v4**(`^4.3.3`, CSS-first 방식 — `tailwind.config.ts` 없음, `app/globals.css`의 `@import "tailwindcss"` + `@theme` 블록으로 색상/반경 토큰 정의, `@custom-variant dark (&:is(.dark *));`로 다크모드 variant 선언) + `next-themes`. 애니메이션 유틸리티는 `tailwindcss-animate`(v3 전용, v4 미지원) 대신 `tw-animate-css`(`app/globals.css`에서 `@import "tw-animate-css";`) 사용. `components.json`의 별칭: `@/components`, `@/components/ui`, `@/lib`, `@/hooks`(`hooks/`). 새 shadcn 컴포넌트는 `components/ui/`에, 도메인 컴포넌트는 `components/` 루트에, 커스텀 훅은 `hooks/`에 위치(예: `hooks/use-is-mounted.ts` — SSR/CSR hydration 불일치를 `useSyncExternalStore`로 처리하는 패턴, `useEffect`+`setState`로 mounted 플래그를 만들면 `react-hooks/set-state-in-effect` ESLint 규칙에 걸리므로 이 훅을 재사용할 것). 다크모드는 `app/globals.css`의 `@custom-variant dark` + `next-themes`의 `attribute="class"` 조합.
 
 ### 문서
 

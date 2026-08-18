@@ -2,29 +2,18 @@
 
 이 문서는 TailwindCSS v4 + shadcn/ui를 활용한 최신 스타일링 규칙과 모범 사례를 제공합니다.
 
-> **⚠️ 이 프로젝트는 실제로 TailwindCSS v3(`^3.4.1`)를 사용 중이다.** `tailwind.config.ts` + `app/globals.css`의 `@tailwind base/components/utilities` 디렉티브 방식(JS 설정 파일 기반)이며, 아래에서 설명하는 v4의 CSS-first(`@theme`, `@import "tailwindcss"`) 방식이 아니다. v3와 v4의 차이가 중요한 부분(설치, 설정 파일, 다크모드 선언)은 각 섹션에 별도로 표시해 두었으니, 이 프로젝트에서 실제로 코드를 작성할 때는 v3 표기를 따를 것. 클래스 이름 자체(`bg-background`, `rounded-lg` 등 유틸리티 클래스)는 v3/v4 공통이라 그대로 적용 가능하다.
+> **이 프로젝트는 TailwindCSS v4(`^4.3.3`)를 사용한다.** `app/globals.css`의 `@import "tailwindcss"` + `@theme` CSS-first 방식이며, `tailwind.config.ts`는 존재하지 않는다(2026-08-18 v3→v4 마이그레이션 완료). 아래 내용은 이 프로젝트의 실제 설정과 일치한다.
 
 ## 🎨 기술 스택 개요
 
 ### 핵심 스타일링 도구
 
-- **TailwindCSS v4**: CSS-first 설정(`@theme`)을 도입한 최신 유틸리티 기반 CSS 프레임워크. ⚠️ 이 프로젝트는 v3.4.19가 설치되어 있음 — 아래 "v3 vs v4" 노트 참고
+- **TailwindCSS v4**: CSS-first 설정(`@theme`)을 도입한 최신 유틸리티 기반 CSS 프레임워크
 - **shadcn/ui**: Radix UI 기반 컴포넌트 라이브러리 (new-york style)
 - **next-themes**: 다크모드 지원
-- **tw-animate-css**: 애니메이션 라이브러리 (⚠️ 이 프로젝트에는 미설치 — 실제로는 `tailwindcss-animate` 플러그인을 사용 중)
+- **tw-animate-css**: 애니메이션 라이브러리 (`app/globals.css`에서 `@import "tw-animate-css";`)
 - **CSS Variables**: 동적 테마 시스템
-- **prettier-plugin-tailwindcss**: 자동 클래스 정렬 (⚠️ 이 프로젝트에는 미설치)
-
-### 🔀 v3 vs v4 핵심 차이 (이 프로젝트는 v3)
-
-| 항목           | v4 (최신, 이 문서 기준)                                   | v3 (이 프로젝트 실제 설정)                                   |
-| -------------- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| 설치           | `npm install tailwindcss @tailwindcss/postcss`            | `npm install tailwindcss postcss autoprefixer`               |
-| PostCSS 설정   | `postcss.config.mjs`에 `"@tailwindcss/postcss": {}`       | `postcss.config.mjs`에 `tailwindcss`, `autoprefixer`         |
-| CSS 진입점     | `@import "tailwindcss";`                                  | `@tailwind base; @tailwind components; @tailwind utilities;` |
-| 테마/토큰 설정 | CSS의 `@theme { --color-...: ...; }`                      | `tailwind.config.ts`의 `theme.extend` (JS 객체)              |
-| 다크모드 선언  | CSS에서 `@custom-variant dark (&:where(.dark, .dark *));` | `tailwind.config.ts`의 `darkMode: ["class"]`                 |
-| 설정 파일      | 선택 사항(`@config` 지시어로 레거시 JS 설정도 병행 가능)  | `tailwind.config.ts` 필수                                    |
+- **prettier-plugin-tailwindcss**: 자동 클래스 정렬
 
 ## 🚀 TailwindCSS v4 사용 규칙
 
@@ -193,28 +182,15 @@ npx shadcn@latest add
 
 ## 🌓 다크모드 구현
 
-### 다크모드 선언 (v4: CSS / v3: config)
+### 다크모드 선언
 
-Tailwind v4는 다크모드를 CSS 안에서 `@custom-variant`로 선언한다. `next-themes`가 `<html>`에 `class="dark"`를 붙이는 방식과 맞추려면 클래스 셀렉터 기반 variant를 등록한다.
+Tailwind v4는 다크모드를 CSS 안에서 `@custom-variant`로 선언한다. `next-themes`가 `<html>`에 `class="dark"`를 붙이는 방식과 맞추려면 클래스 셀렉터 기반 variant를 등록한다. 이 프로젝트의 실제 선언(`app/globals.css`):
 
 ```css
-/* app/globals.css (v4 방식) */
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:is(.dark *));
 ```
-
-> **⚠️ 이 프로젝트(v3)의 실제 설정**: v3에는 `@custom-variant`가 없다. 대신 `tailwind.config.ts`의 `darkMode` 옵션으로 선언하며, 이 프로젝트는 `darkMode: ["class"]`로 설정되어 있다.
->
-> ```typescript
-> // tailwind.config.ts (이 프로젝트의 실제 설정)
-> import type { Config } from "tailwindcss";
->
-> export default {
->   darkMode: ["class"],
->   // ...
-> } satisfies Config;
-> ```
 
 ### next-themes 활용
 
@@ -253,8 +229,8 @@ export function ThemeToggle() {
       size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
-      <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-      <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
       <span className="sr-only">테마 전환</span>
     </Button>
   );
@@ -296,29 +272,27 @@ Tailwind v4에서는 `@theme` 안에 정의한 CSS 변수가 곧바로 유틸리
 }
 ```
 
-> **⚠️ 이 프로젝트(v3)의 실제 설정**: v3에는 `@theme`이 없다. CSS 변수는 `:root`/`.dark`에 HSL 값만 선언하고, `tailwind.config.ts`의 `theme.extend.colors`에서 `hsl(var(--background))` 형태로 매핑해야 유틸리티 클래스가 생성된다. 실제 `app/globals.css`에 정의된 변수:
->
-> ```css
-> :root {
->   --background: 0 0% 100%;
->   --foreground: 224 71.4% 4.1%;
->   --primary: 220.9 39.3% 11%;
->   --primary-foreground: 210 20% 98%;
->   --secondary: 220 14.3% 95.9%;
->   --secondary-foreground: 220.9 39.3% 11%;
->   --muted: 220 14.3% 95.9%;
->   --muted-foreground: 220 8.9% 46.1%;
->   --accent: 220 14.3% 95.9%;
->   --accent-foreground: 220.9 39.3% 11%;
->   --destructive: 0 84.2% 60.2%;
->   --destructive-foreground: 210 20% 98%;
->   --border: 220 13% 91%;
->   --input: 220 13% 91%;
->   --ring: 224 71.4% 4.1%;
-> }
-> ```
->
-> 그리고 `tailwind.config.ts`에서 `background: "hsl(var(--background))"` 식으로 별도 매핑한다(자세한 내용은 프로젝트 루트 `tailwind.config.ts` 참고).
+이 프로젝트의 실제 `app/globals.css`는 `:root`/`.dark`에 raw HSL 값을 선언하고, `@theme` 블록에서 `--color-background: hsl(var(--background))` 형태로 매핑하는 2계층 구조를 쓴다:
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --primary: 0 0% 9%;
+  --primary-foreground: 0 0% 98%;
+  /* ... */
+}
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  /* ... */
+}
+```
+
+전체 변수 목록은 `app/globals.css` 참고.
 
 ### 색상 사용 예시
 
@@ -341,13 +315,9 @@ Tailwind v4에서는 `@theme` 안에 정의한 CSS 변수가 곧바로 유틸리
 
 ### tw-animate-css 활용
 
-`tw-animate-css`는 v4 환경(shadcn/ui의 v4 기본 템플릿 포함)에서 권장되는 애니메이션 유틸리티 패키지다.
-
-> **⚠️ 이 프로젝트(v3)의 실제 설정**: `tw-animate-css`가 아니라 v3용 `tailwindcss-animate` 플러그인이 설치되어 있으며(`tailwind.config.ts`의 `plugins: [require("tailwindcss-animate")]`), `accordion-down`/`accordion-up` 같은 애니메이션 유틸리티를 제공한다. 아래 `tw-animate-css` 예시를 그대로 쓰려면 v4로 마이그레이션하거나 별도 설치가 필요하다.
+`tw-animate-css`는 v4 환경(shadcn/ui의 v4 기본 템플릿 포함)에서 권장되는 애니메이션 유틸리티 패키지이며, 이 프로젝트에도 설치되어 `app/globals.css`에서 `@import "tw-animate-css";`로 로드된다. `accordion-down`/`accordion-up` 등 v3의 `tailwindcss-animate`가 제공하던 애니메이션 유틸리티와 클래스명이 동일하다.
 
 ```tsx
-import 'tw-animate-css'
-
 // ✅ 내장 애니메이션 사용
 <div className="animate-fadeIn">페이드 인</div>
 <div className="animate-slideUp">슬라이드 업</div>
