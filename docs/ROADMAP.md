@@ -52,28 +52,14 @@
   - 루트 `proxy.ts` matcher 및 공개 경로 정책 정리 — `/`, `/products/*`는 공개, `/cart`, `/checkout`, `/orders/*`, `/admin/*`는 인증 필요로 구분
   - 관련 기능 ID: F003, F004, F005, F006, F010, F011, F020
 
-- **Task 002: Supabase 스키마 설계 및 마이그레이션 파일 작성**
-  - `supabase/migrations/`에 신규 마이그레이션 파일 작성(원격 적용은 Task 007에서 수행):
-    - `profiles.role` 컬럼 추가 + 관리자 판별 헬퍼 + 권한 상승 방지책 마련
-    - `products`(name, price, stock_quantity, threshold, description 등)
-    - `orders`(user_id, status, total_amount, payment_key, 배송정보) + `order_items`(product_id, quantity, unit_price)
-    - `purchase_orders`(status pending/confirmed/received, requested_quantity)
-  - 중복 발주 방지 로직 설계: 동일 `product_id`에 pending/confirmed 상태 발주가 있으면 재생성하지 않도록 제약(유니크 인덱스 등) 설계, received 이후에는 재발주 허용
-  - `process_order_payment` 함수 시그니처 설계(구현은 Task 010) — 클라이언트가 전달한 가격을 신뢰하지 않고 서버가 `products.price`로 금액을 재계산하는 규약으로 설계
-  - RLS 정책 작성(PRD 6장): `products` select 공개·변경 admin, `orders`/`order_items` 본인 또는 admin select, 클라이언트 직접 insert 차단, `purchase_orders` admin 전용
-  - 관련 기능 ID: F009, F020, F022, F023
-
-- **Task 003: 타입 정의 및 도메인 유틸리티 기반 마련**
-  - `lib/types/commerce.ts` 작성 — `Product`, `CartItem`, `Order`, `OrderItem`, `PurchaseOrder`, `OrderStatus`, `PurchaseOrderStatus` 도메인 타입 정의(추후 `database.types.ts` 재생성 결과와 합성)
-  - `lib/schemas/` 작성 — zod 스키마: `productSchema`(name/price/stock_quantity/threshold/description), `shippingSchema`(수령인/주소/연락처)
+- **Task 002: 타입 정의 및 도메인 유틸리티 기반 마련**
   - `lib/format.ts` 작성 — 원화 금액 포맷, 주문/발주 상태 라벨 매핑
   - `lib/auth/require-admin.ts` 작성 — Server Component에서 `supabase.auth.getClaims()` + `profiles.role` 확인 후 비관리자 시 `redirect("/")` (F020 골격, 실제 DB 조회는 Phase 3에서 연결)
-  - `lib/supabase/database.types.ts` 재생성 계획 수립(Task 009에서 실행)
   - 관련 기능 ID: F020
 
 ### Phase 2: UI/UX 완성 (더미 데이터 활용)
 
-- **Task 004: shadcn 컴포넌트 설치 및 더미 데이터 계층 구성** - 우선순위
+- **Task 003: shadcn 컴포넌트 설치 및 더미 데이터 계층 구성** - 우선순위
   - shadcn/ui 신규 컴포넌트 설치: `table`, `select`, `textarea`, `dialog`, `tabs`, `form` → `components/ui/`
   - `lib/mock/products.ts`, `lib/mock/orders.ts`, `lib/mock/purchase-orders.ts` 작성 — 재고 충분/임계치 근접/품절 케이스를 모두 포함한 더미 데이터
   - `components/product-card.tsx`, `components/status-badge.tsx`, `components/empty-state.tsx` 등 공통 도메인 컴포넌트 구현
@@ -81,7 +67,7 @@
   - 장바구니 상태 관리 방식 결정 및 구현 — `localStorage` 기반 클라이언트 상태(`hooks/use-cart.ts`), SSR hydration은 `hooks/use-is-mounted.ts` 패턴 재사용
   - 관련 기능 ID: F003, F005
 
-- **Task 005: 고객 페이지 UI 구현 (더미 데이터)**
+- **Task 004: 고객 페이지 UI 구현 (더미 데이터)**
   - `app/page.tsx` — 상품 카드 그리드, 반응형 컬럼(모바일 1 / 태블릿 2 / 데스크톱 3~4) (F003)
   - `app/products/[id]/page.tsx` — 상품 정보, 재고 여부 표시(수량 노출 대신 "재고 있음/품절"), 수량 선택기, 담기 버튼 (F004, F005)
   - `app/cart/page.tsx` — 장바구니 목록, 수량 조정, 삭제, 합계, 결제하기 버튼 (F005)
@@ -90,7 +76,7 @@
   - 로그인/회원가입 폼을 `useState`에서 react-hook-form + zod로 전환(`components/login-form.tsx`, `components/sign-up-form.tsx`) (F001, F002)
   - 반응형·다크모드 검증: `npm run dev` 후 `mcp__playwright__browser_navigate` → `browser_resize`(375/768/1280) + 테마 토글로 `browser_snapshot` 반복 확인
 
-- **Task 006: 관리자 페이지 UI 구현 (더미 데이터)**
+- **Task 005: 관리자 페이지 UI 구현 (더미 데이터)**
   - `app/admin/layout.tsx` — 관리자 사이드바/탭 네비게이션(대시보드·상품·주문·발주)
   - `app/admin/page.tsx` — 매출 합계, 주문 건수, 재고부족 상품 수 요약 카드 (F021)
   - `app/admin/products/page.tsx` — `table` 기반 상품 목록, 등록/수정 `dialog` + react-hook-form 폼(name/price/stock_quantity/threshold/description), 삭제 확인 다이얼로그 (F022, F023)
@@ -101,9 +87,22 @@
 
 ### Phase 3: 핵심 기능 구현
 
-- **Task 007: Supabase 스키마 원격 적용 및 타입 재생성** - 우선순위
+- **Task 006: Supabase 스키마 설계 및 마이그레이션 파일 작성** - 우선순위
+  - `supabase/migrations/`에 신규 마이그레이션 파일 작성(원격 적용은 Task 007에서 수행):
+    - `profiles.role` 컬럼 추가 + 관리자 판별 헬퍼 + 권한 상승 방지책 마련
+    - `products`(name, price, stock_quantity, threshold, description 등)
+    - `orders`(user_id, status, total_amount, payment_key, 배송정보) + `order_items`(product_id, quantity, unit_price)
+    - `purchase_orders`(status pending/confirmed/received, requested_quantity)
+  - 중복 발주 방지 로직 설계: 동일 `product_id`에 pending/confirmed 상태 발주가 있으면 재생성하지 않도록 제약(유니크 인덱스 등) 설계, received 이후에는 재발주 허용
+  - `process_order_payment` 함수 시그니처 설계(구현은 Task 010) — 클라이언트가 전달한 가격을 신뢰하지 않고 서버가 `products.price`로 금액을 재계산하는 규약으로 설계
+  - RLS 정책 작성(PRD 6장): `products` select 공개·변경 admin, `orders`/`order_items` 본인 또는 admin select, 클라이언트 직접 insert 차단, `purchase_orders` admin 전용
+  - `lib/types/commerce.ts` 작성 — `Product`, `CartItem`, `Order`, `OrderItem`, `PurchaseOrder`, `OrderStatus`, `PurchaseOrderStatus` 도메인 타입 정의(추후 `database.types.ts` 재생성 결과와 합성)
+  - `lib/schemas/` 작성 — zod 스키마: `productSchema`(name/price/stock_quantity/threshold/description), `shippingSchema`(수령인/주소/연락처)
+  - 관련 기능 ID: F009, F020, F022, F023
+
+- **Task 007: Supabase 스키마 원격 적용 및 타입 재생성**
   - `mcp__supabase__list_tables`로 현재 원격 스키마 확인
-  - Task 002에서 작성한 마이그레이션을 `mcp__supabase__apply_migration`으로 순차 적용(profiles.role → products → orders → order_items → purchase_orders)
+  - Task 006에서 작성한 마이그레이션을 `mcp__supabase__apply_migration`으로 순차 적용(profiles.role → products → orders → order_items → purchase_orders)
   - `mcp__supabase__generate_typescript_types`로 `lib/supabase/database.types.ts` 재생성, `lib/types/commerce.ts`를 생성된 `Tables<>` 타입 기반으로 정리
   - 시드 데이터 삽입(`mcp__supabase__execute_sql`) — 상품 5~10건, 관리자 계정 1건의 `profiles.role = 'admin'` 지정
   - `mcp__supabase__get_advisors`(security/performance)로 초기 경고 확인 및 기록
@@ -121,7 +120,7 @@
   - `lib/supabase/proxy.ts`의 `updateSession()` 공개/보호 경로 규칙 확정(`/`, `/products/*`, `/auth/*`는 공개)
   - `/checkout` 미인증 진입 시 `redirect=/checkout` 쿼리로 로그인 페이지 이동, 로그인 성공 후 복귀 처리
   - `lib/auth/require-admin.ts` 완성 — `profiles.role` 조회 후 비관리자 시 홈 리다이렉트, `app/admin/layout.tsx`에서 호출 (F020)
-  - Task 002의 RLS 정책을 `mcp__supabase__apply_migration`으로 적용: `products`(select 공개 / 변경 admin), `orders`·`order_items`(select 본인 또는 admin, 클라이언트 insert 차단), `purchase_orders`(admin 전용)
+  - Task 006의 RLS 정책을 `mcp__supabase__apply_migration`으로 적용: `products`(select 공개 / 변경 admin), `orders`·`order_items`(select 본인 또는 admin, 클라이언트 insert 차단), `purchase_orders`(admin 전용)
   - `mcp__supabase__get_advisors`로 RLS 미적용·정책 누락 경고 0건 확인
   - **테스트 체크리스트**: `mcp__playwright__*`로 비로그인 `/checkout` 접근 → 로그인 → 체크아웃 복귀, customer 계정으로 `/admin` 접근 시 홈 리다이렉트, admin 계정으로 `/admin` 정상 진입, customer가 타인 주문 조회 불가
 
@@ -168,22 +167,22 @@
 
 | 기능 ID | 기능명                 | 담당 Task               |
 | ------- | ---------------------- | ----------------------- |
-| F001    | 회원가입               | Task 005                |
-| F002    | 로그인                 | Task 005                |
-| F003    | 상품 목록 조회         | Task 004, 005, 008, 012 |
-| F004    | 상품 상세 조회         | Task 005, 008           |
-| F005    | 장바구니 관리          | Task 004, 005, 008      |
-| F006    | 배송정보 입력          | Task 005                |
+| F001    | 회원가입               | Task 004                |
+| F002    | 로그인                 | Task 004                |
+| F003    | 상품 목록 조회         | Task 003, 004, 008, 012 |
+| F004    | 상품 상세 조회         | Task 004, 008           |
+| F005    | 장바구니 관리          | Task 003, 004, 008      |
+| F006    | 배송정보 입력          | Task 004                |
 | F007    | 토스페이먼츠 결제 요청 | Task 010                |
 | F008    | 결제 승인 및 주문 생성 | Task 010                |
-| F009    | 자동 발주 요청 생성    | Task 002, 010           |
-| F010    | 주문완료 확인          | Task 005, 010           |
-| F011    | 주문내역 조회          | Task 005, 010           |
-| F020    | 관리자 권한 체크       | Task 003, 009           |
-| F021    | 대시보드 요약          | Task 006, 011           |
-| F022    | 상품 등록              | Task 006, 011, 012      |
-| F023    | 상품 수정/삭제         | Task 006, 011           |
-| F024    | 주문 관리              | Task 006, 011           |
-| F025    | 발주 요청 목록 조회    | Task 006, 011           |
-| F026    | 발주 확인 처리         | Task 006, 011           |
-| F027    | 입고 처리              | Task 006, 011           |
+| F009    | 자동 발주 요청 생성    | Task 006, 010           |
+| F010    | 주문완료 확인          | Task 004, 010           |
+| F011    | 주문내역 조회          | Task 004, 010           |
+| F020    | 관리자 권한 체크       | Task 002, 009           |
+| F021    | 대시보드 요약          | Task 005, 011           |
+| F022    | 상품 등록              | Task 005, 011, 012      |
+| F023    | 상품 수정/삭제         | Task 005, 011           |
+| F024    | 주문 관리              | Task 005, 011           |
+| F025    | 발주 요청 목록 조회    | Task 005, 011           |
+| F026    | 발주 확인 처리         | Task 005, 011           |
+| F027    | 입고 처리              | Task 005, 011           |
