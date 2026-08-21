@@ -59,7 +59,7 @@
 
 ### Phase 2: UI/UX 완성 (더미 데이터 활용)
 
-- **Task 003: shadcn 컴포넌트 설치 및 더미 데이터 계층 구성** - 우선순위
+- ✅ **Task 003: shadcn 컴포넌트 설치 및 더미 데이터 계층 구성** - 우선순위
   - shadcn/ui 신규 컴포넌트 설치: `table`, `select`, `textarea`, `dialog`, `tabs`, `form` → `components/ui/`
   - `lib/mock/products.ts`, `lib/mock/orders.ts`, `lib/mock/purchase-orders.ts` 작성 — 재고 충분/임계치 근접/품절 케이스를 모두 포함한 더미 데이터
   - `components/product-card.tsx`, `components/status-badge.tsx`, `components/empty-state.tsx` 등 공통 도메인 컴포넌트 구현
@@ -67,23 +67,23 @@
   - 장바구니 상태 관리 방식 결정 및 구현 — `localStorage` 기반 클라이언트 상태(`hooks/use-cart.ts`), SSR hydration은 `hooks/use-is-mounted.ts` 패턴 재사용
   - 관련 기능 ID: F003, F005
 
-- **Task 004: 고객 페이지 UI 구현 (더미 데이터)**
+- ✅ **Task 004: 고객 페이지 UI 구현 (더미 데이터)**
   - `app/page.tsx` — 상품 카드 그리드, 반응형 컬럼(모바일 1 / 태블릿 2 / 데스크톱 3~4) (F003)
   - `app/products/[id]/page.tsx` — 상품 정보, 재고 여부 표시(수량 노출 대신 "재고 있음/품절"), 수량 선택기, 담기 버튼 (F004, F005)
   - `app/cart/page.tsx` — 장바구니 목록, 수량 조정, 삭제, 합계, 결제하기 버튼 (F005)
   - `app/checkout/page.tsx` — react-hook-form + zod 기반 배송정보 폼(`components/ui/form` 사용), 주문 요약 패널, 결제 버튼 (F006)
   - `app/orders/complete/page.tsx` — 결제 결과 및 주문 요약 UI (F010) / `app/orders/page.tsx` — 주문 목록 테이블 + 상태 배지 (F011)
-  - 로그인/회원가입 폼을 `useState`에서 react-hook-form + zod로 전환(`components/login-form.tsx`, `components/sign-up-form.tsx`) (F001, F002)
+  - 로그인/회원가입 폼을 `useState`에서 react-hook-form + zod로 전환(`components/login-form.tsx`, `components/sign-up-form.tsx`) (F001, F002) — 이전 커밋(216f832)에서 이미 완료되어 있음을 확인
   - 반응형·다크모드 검증: `npm run dev` 후 `mcp__playwright__browser_navigate` → `browser_resize`(375/768/1280) + 테마 토글로 `browser_snapshot` 반복 확인
 
-- **Task 005: 관리자 페이지 UI 구현 (더미 데이터)**
+- ✅ **Task 005: 관리자 페이지 UI 구현 (더미 데이터)**
   - `app/admin/layout.tsx` — 관리자 사이드바/탭 네비게이션(대시보드·상품·주문·발주)
   - `app/admin/page.tsx` — 매출 합계, 주문 건수, 재고부족 상품 수 요약 카드 (F021)
   - `app/admin/products/page.tsx` — `table` 기반 상품 목록, 등록/수정 `dialog` + react-hook-form 폼(name/price/stock_quantity/threshold/description), 삭제 확인 다이얼로그 (F022, F023)
   - `app/admin/orders/page.tsx` — 주문 목록 테이블, 상세 다이얼로그, 배송 상태 변경 `select` (F024)
   - `app/admin/purchase-orders/page.tsx` — `tabs`로 pending/confirmed/received 상태별 목록, 확인 처리·입고 처리 버튼 (F025, F026, F027)
-  - 헤더 메뉴에 admin 전용 항목 노출 분기 완성(`components/site-header.tsx`)
-  - 반응형(테이블 가로 스크롤)·다크모드를 `mcp__playwright__*`로 검증
+  - 헤더 메뉴 admin 전용 항목 노출 분기는 `profiles.role` 조회가 가능해지는 Phase 3 Task 009로 이연(`components/site-header.tsx`에 TODO 명시), 대신 관리자 라우트 자체 서브 네비게이션(`app/admin/layout.tsx`)으로 대체 구현
+  - 반응형(테이블 가로 스크롤)·다크모드를 `mcp__playwright__*` 및 사용자 브라우저 확인으로 검증
 
 ### Phase 3: 핵심 기능 구현
 
