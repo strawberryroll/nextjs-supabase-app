@@ -1,0 +1,4 @@
+- [project-nextjs-supabase-app](project_nextjs-supabase-app.md) — commerce MVP repo identity, npm/no-src layout, `instant=false` is a real Next 16 API
+- [feedback-use-sync-external-store](feedback_use-sync-external-store.md) — useSyncExternalStore snapshot getter must be reference-stable; bug found in hooks/use-cart.ts
+- [feedback-review-methodology](feedback_review-methodology.md) — review scope = commits + working tree combined; verify Next 16 APIs in node_modules/docs before flagging
+- [project-task004-customer-ui](project_task004-customer-ui.md) — Task 004 review: instant=false split correct, useCart multi-instance safe, cart/checkout/orders protected only by proxy (no getClaims re-check, not under app/protected/)

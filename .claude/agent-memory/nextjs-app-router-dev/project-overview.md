@@ -1,22 +1,22 @@
 ---
 name: project-overview
-description: 프로젝트 목적, 현재 구현 상태, 주요 파일 위치 요약
+description: nextjs-supabase-app 저장소의 실제 정체 — 커머스 MVP, npm/flat 구조, cacheComponents 활성화
 metadata:
   type: project
 ---
 
-Notion CMS 기반 강의 복습 노트 블로그. Phase 1(환경 설정)~Phase 2(공통 모듈) 완료 후 Phase 3(핵심 기능) 구현 완료(2026-06-29 기준).
+이 저장소(`/Users/nuyha/workspace/courses/nextjs-supabase-app`)는 Next.js 16(App Router) + Supabase(`@supabase/ssr`) 기반 **커머스 MVP**다. 이전에 다른 대화에서 다뤘던 Notion CMS 강의 노트 블로그(pnpm, src/ 구조, zod 4.0.17 고정 등)와는 **별개의 프로젝트**이므로 그쪽 메모리 내용은 이 저장소에 적용하지 않는다.
 
-**Why:** 강의 노트를 Notion에서 작성하면 블로그에 자동 반영되는 구조.
+핵심 스택/구조:
+- npm 사용, `src/` 없이 루트에 `app/` `components/` `lib/` `hooks/` (flat 구조)
+- `next.config.ts`에 `cacheComponents: true` — route segment config(`dynamic`/`revalidate`/`fetchCache`) 사용 시 빌드 에러. `"use cache"` + `cacheLife` + `<Suspense>` 조합이 표준
+- `middleware.ts` 대신 루트 `proxy.ts` + `lib/supabase/proxy.ts`의 `updateSession()`
+- Supabase 클라이언트 3종: `lib/supabase/client.ts`(브라우저) / `server.ts`(Server Component, async) / `proxy.ts`(updateSession)
+- `app/protected/page.tsx`가 `getClaims()`를 Suspense로 감싸는 참조 패턴(`components/auth-button.tsx`)을 이미 보유
 
-**How to apply:** Phase 4(SEO/태그 필터), Phase 5(배포) 남아있음. 다음 작업 시 ROADMAP.md 참고.
+진행 상태(2026-08-21 기준): Phase 1(라우트 골격) 커밋 완료, Phase 2 Task 003(shadcn 컴포넌트 + 더미 데이터)이 워킹 트리에 미커밋 상태로 존재. 대부분의 페이지가 "구현 예정 (Phase 2)" 플레이스홀더이며 실데이터 연동은 Phase 3 예정.
 
-구현 완료 파일:
+**Why:** 세션 시작 시 시스템 프롬프트에서 이 프로젝트가 이전 대화 메모리(Notion 블로그)와 다른 프로젝트임을 명시적으로 알려줬음 — 두 프로젝트를 혼동하지 말 것.
+**How to apply:** 이 저장소 작업 시작 시 항상 CLAUDE.md/AGENTS.md를 먼저 읽어 표준을 재확인. 다른 프로젝트의 컨벤션(pnpm, src/, zod 버전 고정 등)을 이 저장소에 끌어오지 말 것.
 
-- `src/lib/notion.ts`: getCourses(), getNotes(), getNote(), Course/Note/BlockObjectResponse 타입
-- `src/app/page.tsx`: 강의 목록 Server Component (revalidate=60)
-- `src/app/courses/[courseId]/page.tsx`: 노트 목록
-- `src/app/courses/[courseId]/[noteId]/page.tsx`: 노트 상세
-- `src/components/common/course-card.tsx`: 강의 카드
-- `src/components/common/note-card.tsx`: 노트 목록 아이템
-- `src/components/common/notion-renderer.tsx`: Notion 블록 렌더러 (8가지 MVP 블록 지원)
+관련: [[feedback-instant-false-pattern]]
