@@ -44,7 +44,7 @@
 
 ### Phase 1: 애플리케이션 골격 구축
 
-- **Task 001: 전체 라우트 구조 및 공통 레이아웃 골격 생성** - 우선순위
+- ✅ **Task 001: 전체 라우트 구조 및 공통 레이아웃 골격 생성** - 우선순위
   - 고객 라우트 빈 페이지 생성: `app/page.tsx`(홈/상품 목록, 기존 랜딩 대체), `app/products/[id]/page.tsx`, `app/cart/page.tsx`, `app/checkout/page.tsx`, `app/orders/page.tsx`, `app/orders/complete/page.tsx`
   - 관리자 라우트 빈 페이지 생성: `app/admin/layout.tsx`, `app/admin/page.tsx`(대시보드), `app/admin/products/page.tsx`, `app/admin/orders/page.tsx`, `app/admin/purchase-orders/page.tsx`
   - 결제 승인 Route Handler 스텁 생성: `app/api/payments/confirm/route.ts` (F008 자리만 확보, 로직 없음)
@@ -52,7 +52,7 @@
   - 루트 `proxy.ts` matcher 및 공개 경로 정책 정리 — `/`, `/products/*`는 공개, `/cart`, `/checkout`, `/orders/*`, `/admin/*`는 인증 필요로 구분
   - 관련 기능 ID: F003, F004, F005, F006, F010, F011, F020
 
-- **Task 002: 타입 정의 및 도메인 유틸리티 기반 마련**
+- ✅ **Task 002: 타입 정의 및 도메인 유틸리티 기반 마련**
   - `lib/format.ts` 작성 — 원화 금액 포맷, 주문/발주 상태 라벨 매핑
   - `lib/auth/require-admin.ts` 작성 — Server Component에서 `supabase.auth.getClaims()` + `profiles.role` 확인 후 비관리자 시 `redirect("/")` (F020 골격, 실제 DB 조회는 Phase 3에서 연결)
   - 관련 기능 ID: F020
