@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -97,9 +98,25 @@ export function CheckoutForm() {
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <p className="font-semibold">주문 요약</p>
         {items.map((item) => (
-          <div key={item.productId} className="flex justify-between text-sm">
-            <span>
-              {item.name} x {item.quantity}
+          <div
+            key={item.productId}
+            className="flex items-center justify-between text-sm"
+          >
+            <span className="flex items-center gap-3">
+              <span className="bg-muted relative aspect-square w-10 shrink-0 overflow-hidden rounded-md">
+                {item.imageUrl && (
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    fill
+                    sizes="40px"
+                    className="object-cover"
+                  />
+                )}
+              </span>
+              <span>
+                {item.name} x {item.quantity}
+              </span>
             </span>
             <span>{formatCurrencyKRW(item.price * item.quantity)}</span>
           </div>

@@ -20,6 +20,7 @@ export default function Home() {
               name={product.name}
               price={product.price}
               inStock={product.stockQuantity > 0}
+              imageUrl={product.imageUrl}
             />
           ))}
         </div>

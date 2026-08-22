@@ -1,10 +1,11 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+<h1 align="center">원두산책 (Bean Route)</h1>
 
 <p align="center">
- The fastest way to build apps with Next.js and Supabase
+ 재고 걱정 없이 원두와 드립용품을 만나는 원두 · 드립용품 전문 쇼핑몰
+</p>
+
+<p align="center">
+ 재고가 임계치 아래로 떨어지면 시스템이 스스로 발주를 만들어주는 재고 부족 자동 재주문 커머스 웹(Next.js + Supabase 기반)
 </p>
 
 <p align="center">

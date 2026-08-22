@@ -17,7 +17,7 @@
 - **Supabase 클라이언트 3종을 컨텍스트 바꿔서 쓰지 말 것**: Client Component는 `lib/supabase/client.ts`, Server Component/Route Handler는 `lib/supabase/server.ts`(`await createClient()`), 루트 `proxy.ts`의 세션 갱신은 `lib/supabase/proxy.ts`의 `updateSession()`만 사용한다. 세 파일 모두 `lib/supabase/database.types.ts`의 `Database` 제네릭을 사용하므로, 스키마 변경 후에는 이 파일을 반드시 재생성한다(`mcp__supabase__generate_typescript_types`).
 - **`lib/supabase/proxy.ts` 수정 시**: `createServerClient(...)` 호출과 `await supabase.auth.getClaims()` 호출 사이에 어떤 코드도 추가하지 않는다. 응답 객체를 새로 만들 경우 기존 `supabaseResponse`의 쿠키를 반드시 복사해서 반환한다(파일 내 주석 규칙 참조). 이 파일과 루트 `proxy.ts`의 `config.matcher`는 함께 검토한다 — 새 공개/보호 라우트를 추가하면 `updateSession()`의 경로 조건과 `proxy.ts`의 matcher 둘 다 갱신 대상인지 확인한다.
 - **스키마 변경 시 항상 함께 갱신할 파일**: `supabase/migrations/`에 새 마이그레이션 추가 → `mcp__supabase__apply_migration`으로 원격 적용 → `lib/supabase/database.types.ts` 재생성 → 해당 테이블을 사용하는 `lib/queries/*`, `lib/schemas/*`, 관련 페이지의 타입을 함께 갱신한다. 마이그레이션 파일만 추가하고 타입 재생성을 건너뛰지 않는다.
-- **관리자 전용 라우트 신설 시**: 페이지 구현과 함께 권한 체크 로직(`profiles.role = 'admin'` 검증)을 반드시 포함한다. `app/protected/page.tsx`가 보여주는 패턴처럼, `proxy.ts`의 optimistic check와 별개로 Server Component 내부에서 `supabase.auth.getClaims()`(관리자 라우트는 추가로 `profiles.role` 조회)로 재검증한 뒤 실패 시 `redirect()` 한다.
+- **관리자 전용 라우트 신설 시**: 페이지 구현과 함께 권한 체크 로직(`profiles.role = 'admin'` 검증)을 반드시 포함한다. `lib/auth/require-admin.ts`가 보여주는 패턴처럼, `proxy.ts`의 optimistic check와 별개로 Server Component 내부에서 `supabase.auth.getClaims()`(관리자 라우트는 추가로 `profiles.role` 조회)로 재검증한 뒤 실패 시 `redirect()` 한다.
 - **`docs/ROADMAP.md` 갱신**: Task 단위 작업을 완료하면 해당 Task를 완료 표시로 갱신한다(`update-roadmap` 스킬 사용 가능). PRD(`docs/PRD.md`)의 기능 ID(F001~F027)나 페이지 구조를 변경했다면 `docs/ROADMAP.md`의 "기능 ID 커버리지" 표도 함께 갱신한다.
 
 ## 코드 작성 표준 (프로젝트 특화)

@@ -77,7 +77,7 @@ Next.js App Router + Supabase(`@supabase/ssr`)로 쿠키 기반 인증을 구현
 ### 인증 흐름과 라우트 보호
 
 - 루트 `proxy.ts`가 거의 모든 경로에서 실행되며(matcher가 정적 파일/이미지 제외), 비로그인 사용자를 `/auth/login`으로 리다이렉트한다. 단, `/`, `/login*`, `/auth/*` 경로는 예외.
-- `app/protected/`는 인증된 사용자 전용 영역. `app/protected/page.tsx`는 proxy의 낙관적 체크와 별개로, Server Component 내부에서 `supabase.auth.getClaims()`로 다시 한 번 인증을 확인하고 실패 시 `redirect("/auth/login")` — proxy는 "optimistic check"일 뿐 완전한 인가 수단이 아니므로 실제 데이터 접근 전에는 항상 서버에서 재확인해야 한다.
+- `lib/auth/require-admin.ts`는 인증된 사용자 전용 영역(관리자 라우트 등)에서, proxy의 낙관적 체크와 별개로 Server Component 내부에서 `supabase.auth.getClaims()`로 다시 한 번 인증을 확인하고 실패 시 `redirect("/auth/login")` — proxy는 "optimistic check"일 뿐 완전한 인가 수단이 아니므로 실제 데이터 접근 전에는 항상 서버에서 재확인해야 한다.
 - `app/auth/`에 login, sign-up, forgot-password, update-password, sign-up-success, error, confirm(OTP 확인용 Route Handler)이 있다.
 - `lib/utils.ts`의 `hasEnvVars`로 Supabase 환경변수 미설정 상태를 감지해 `EnvVarWarning` 컴포넌트를 보여준다(튜토리얼용 체크이므로 실제 배포 시 제거 가능).
 - 실제 로그인/회원가입 폼(`components/login-form.tsx` 등)은 react-hook-form 같은 라이브러리 없이 `useState` + Supabase 브라우저 클라이언트 직접 호출 패턴을 쓴다.

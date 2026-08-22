@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { EmptyState } from "@/components/empty-state";
@@ -34,11 +35,24 @@ export function CartView() {
           key={item.productId}
           className="flex items-center justify-between rounded-lg border p-4"
         >
-          <div>
-            <p className="font-medium">{item.name}</p>
-            <p className="text-muted-foreground text-sm">
-              {formatCurrencyKRW(item.price)}
-            </p>
+          <div className="flex items-center gap-4">
+            <div className="bg-muted relative aspect-square w-16 shrink-0 overflow-hidden rounded-md">
+              {item.imageUrl && (
+                <Image
+                  src={item.imageUrl}
+                  alt={item.name}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
+              )}
+            </div>
+            <div>
+              <p className="font-medium">{item.name}</p>
+              <p className="text-muted-foreground text-sm">
+                {formatCurrencyKRW(item.price)}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">

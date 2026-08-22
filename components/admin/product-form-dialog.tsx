@@ -32,6 +32,7 @@ function ProductForm({ product, onSubmit }: ProductFormProps) {
       stockQuantity: product?.stockQuantity ?? 0,
       threshold: product?.threshold ?? 0,
       description: product?.description ?? "",
+      imageUrl: product?.imageUrl ?? "",
     },
   });
 
@@ -116,6 +117,22 @@ function ProductForm({ product, onSubmit }: ProductFormProps) {
             <Textarea
               {...field}
               id="description"
+              aria-invalid={fieldState.invalid}
+            />
+            <FieldError errors={[fieldState.error]} />
+          </Field>
+        )}
+      />
+      <Controller
+        name="imageUrl"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor="imageUrl">이미지 URL</FieldLabel>
+            <Input
+              {...field}
+              id="imageUrl"
+              placeholder="https://picsum.photos/seed/example/600/600"
               aria-invalid={fieldState.invalid}
             />
             <FieldError errors={[fieldState.error]} />

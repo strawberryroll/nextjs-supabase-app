@@ -10,6 +10,7 @@ interface AddToCartFormProps {
   name: string;
   price: number;
   inStock: boolean;
+  imageUrl: string;
 }
 
 export function AddToCartForm({
@@ -17,6 +18,7 @@ export function AddToCartForm({
   name,
   price,
   inStock,
+  imageUrl,
 }: AddToCartFormProps) {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
@@ -49,7 +51,7 @@ export function AddToCartForm({
         type="button"
         disabled={!inStock}
         onClick={() => {
-          addItem({ productId, name, price }, quantity);
+          addItem({ productId, name, price, imageUrl }, quantity);
           router.push("/cart");
         }}
       >

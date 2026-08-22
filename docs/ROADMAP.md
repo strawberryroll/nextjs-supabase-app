@@ -1,6 +1,6 @@
 # 재고 부족 자동 재주문 커머셜 웹 개발 로드맵
 
-재고가 임계치 아래로 떨어지는 순간 시스템이 스스로 발주를 만들어, 1~2인 셀러가 재고 소진을 놓치지 않게 하는 B2C 쇼핑몰
+재고가 임계치 아래로 떨어지는 순간 시스템이 스스로 발주를 만들어, 1~2인 셀러가 재고 소진을 놓치지 않게 하는 B2C 쇼핑몰(예: 원두·드립용품 전문 쇼핑몰 "원두산책")
 
 ## 개요
 
@@ -35,7 +35,7 @@
 ## 현재 코드베이스 기준선
 
 - `supabase/migrations/`에는 `profiles` 테이블 마이그레이션만 존재 — `role` 컬럼, `products`, `orders`, `order_items`, `purchase_orders` 모두 미생성
-- `app/`에는 `app/auth/*`(login, sign-up, forgot-password, update-password, sign-up-success, error, confirm)과 `app/protected/*`만 존재 — 커머스/관리자 라우트 전무
+- `app/`에는 `app/auth/*`(login, sign-up, forgot-password, update-password, sign-up-success, error, confirm)만 존재 — 커머스/관리자 라우트 전무
 - `components/ui/`에는 badge, button, card, checkbox, dropdown-menu, field, input, label, separator만 설치 — `table`, `select`, `textarea`, `dialog`, `tabs`, `form` 미설치
 - react-hook-form + zod는 설치되어 있으나 적용된 폼 없음(로그인/가입 폼은 `useState` 패턴)
 - 토스페이먼츠 SDK, 상태관리 라이브러리 미설치
@@ -84,6 +84,16 @@
   - `app/admin/purchase-orders/page.tsx` — `tabs`로 pending/confirmed/received 상태별 목록, 확인 처리·입고 처리 버튼 (F025, F026, F027)
   - 헤더 메뉴 admin 전용 항목 노출 분기는 `profiles.role` 조회가 가능해지는 Phase 3 Task 009로 이연(`components/site-header.tsx`에 TODO 명시), 대신 관리자 라우트 자체 서브 네비게이션(`app/admin/layout.tsx`)으로 대체 구현
   - 반응형(테이블 가로 스크롤)·다크모드를 `mcp__playwright__*` 및 사용자 브라우저 확인으로 검증
+
+- ✅ **Task 005-1: 상품 이미지 더미 데이터 적용 (picsum.photos)** - Phase 2 보강
+  - `lib/mock/products.ts`에 `imageUrl` 필드 추가, 상품별 고유 picsum seed 부여
+  - `lib/schemas/product.ts`에 `imageUrl` optional 필드 추가(관리자 폼 URL 입력용)
+  - `hooks/use-cart.ts`의 `CartItem`에 `imageUrl?` 필드 추가
+  - `next.config.ts`에 `images.remotePatterns` 설정(picsum.photos)
+  - `components/product-card.tsx`, 상품 상세, 장바구니, 체크아웃 요약, 관리자 상품 테이블/폼에 `next/image` 렌더링 추가
+  - 반응형·다크모드에서 이미지 aspect-ratio 고정 및 배경(`bg-muted`) 확인
+  - Phase 4 Task 012(Supabase Storage 실제 업로드)의 전 단계 더미 UI 작업 — 필드명(`imageUrl`)은 실데이터 전환 시 그대로 유지
+  - 관련 기능 ID: F003, F004, F005, F022
 
 ### Phase 3: 핵심 기능 구현
 

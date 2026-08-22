@@ -6,6 +6,11 @@ export const productSchema = z.object({
   stockQuantity: z.number().int().min(0, "재고 수량은 0 이상이어야 합니다"),
   threshold: z.number().int().min(0, "임계치는 0 이상이어야 합니다"),
   description: z.string().min(1, "상품 설명을 입력해주세요"),
+  imageUrl: z
+    .string()
+    .url("올바른 이미지 URL을 입력해주세요")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
