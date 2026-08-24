@@ -79,8 +79,8 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl">회원가입</CardTitle>
+          <CardDescription>새 계정을 만드세요</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -90,7 +90,7 @@ export function SignUpForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">이메일</FieldLabel>
                     <Input
                       {...field}
                       id="email"
@@ -107,7 +107,7 @@ export function SignUpForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">비밀번호</FieldLabel>
                     <Input
                       {...field}
                       id="password"
@@ -124,7 +124,7 @@ export function SignUpForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel htmlFor="repeat-password">
-                      Repeat Password
+                      비밀번호 확인
                     </FieldLabel>
                     <Input
                       {...field}
@@ -142,13 +142,13 @@ export function SignUpForm({
                 className="w-full"
                 disabled={isLoading || isGoogleLoading}
               >
-                {isLoading ? "Creating an account..." : "Sign up"}
+                {isLoading ? "계정 생성 중..." : "회원가입"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
+              이미 계정이 있으신가요?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
-                Login
+                로그인
               </Link>
             </div>
           </form>
@@ -168,7 +168,7 @@ export function SignUpForm({
             disabled={isLoading || isGoogleLoading}
           >
             <GoogleIcon className="mr-2 size-4" />
-            {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+            {isGoogleLoading ? "이동 중..." : "Google로 계속하기"}
           </Button>
         </CardContent>
       </Card>

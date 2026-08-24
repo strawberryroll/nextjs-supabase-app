@@ -1,12 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrencyKRW } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -27,33 +20,37 @@ export function ProductCard({
   imageUrl,
 }: ProductCardProps) {
   return (
-    <Link href={`/products/${id}`}>
-      <Card className="h-full overflow-hidden py-0 transition-shadow hover:shadow-md">
-        <div className="bg-muted relative aspect-square overflow-hidden">
-          <Image
-            src={imageUrl}
-            alt={name}
-            fill
-            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-            className={cn("object-cover", !inStock && "grayscale")}
-          />
-        </div>
-        <CardHeader>
-          <CardTitle className="text-base">{name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-foreground text-lg font-semibold">
-            {formatCurrencyKRW(price)}
-          </p>
-        </CardContent>
-        <CardFooter className="pb-6">
-          {inStock ? (
-            <Badge variant="outline">재고 있음</Badge>
-          ) : (
-            <Badge variant="destructive">품절</Badge>
+    <Link href={`/products/${id}`} className="group block">
+      <div className="bg-muted relative aspect-square overflow-hidden rounded-2xl transition-all duration-300 ease-out group-hover:-translate-y-0.5 group-hover:shadow-lg">
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+          className={cn(
+            "object-cover transition-transform duration-300 ease-out group-hover:scale-105",
+            !inStock && "grayscale",
           )}
-        </CardFooter>
-      </Card>
+        />
+      </div>
+
+      <div className="flex flex-col gap-1 pt-3">
+        {inStock ? (
+          <Badge variant="outline" className="w-fit">
+            재고 있음
+          </Badge>
+        ) : (
+          <Badge variant="destructive" className="w-fit">
+            품절
+          </Badge>
+        )}
+        <h3 className="text-foreground line-clamp-2 text-sm leading-tight font-medium">
+          {name}
+        </h3>
+        <p className="text-foreground text-lg font-bold">
+          {formatCurrencyKRW(price)}
+        </p>
+      </div>
     </Link>
   );
 }

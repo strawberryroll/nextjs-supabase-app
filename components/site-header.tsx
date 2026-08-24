@@ -9,7 +9,7 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b-foreground/10 flex h-16 w-full justify-center border-b">
-      <div className="flex w-full max-w-5xl items-center justify-between p-3 px-5 text-sm">
+      <div className="flex w-full max-w-7xl items-center justify-between p-3 px-5 text-sm">
         <Link href="/" className="text-lg font-semibold">
           원두산책
         </Link>

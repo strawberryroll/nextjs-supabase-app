@@ -73,10 +73,8 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
+          <CardTitle className="text-2xl">로그인</CardTitle>
+          <CardDescription>이메일을 입력해 계정에 로그인하세요</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -86,7 +84,7 @@ export function LoginForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                    <FieldLabel htmlFor="email">이메일</FieldLabel>
                     <Input
                       {...field}
                       id="email"
@@ -104,12 +102,12 @@ export function LoginForm({
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <div className="flex items-center">
-                      <FieldLabel htmlFor="password">Password</FieldLabel>
+                      <FieldLabel htmlFor="password">비밀번호</FieldLabel>
                       <Link
                         href="/auth/forgot-password"
                         className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                       >
-                        Forgot your password?
+                        비밀번호를 잊으셨나요?
                       </Link>
                     </div>
                     <Input
@@ -128,16 +126,16 @@ export function LoginForm({
                 className="w-full"
                 disabled={isLoading || isGoogleLoading}
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? "로그인 중..." : "로그인"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
+              계정이 없으신가요?{" "}
               <Link
                 href="/auth/sign-up"
                 className="underline underline-offset-4"
               >
-                Sign up
+                회원가입
               </Link>
             </div>
           </form>
@@ -157,7 +155,7 @@ export function LoginForm({
             disabled={isLoading || isGoogleLoading}
           >
             <GoogleIcon className="mr-2 size-4" />
-            {isGoogleLoading ? "Redirecting..." : "Continue with Google"}
+            {isGoogleLoading ? "이동 중..." : "Google로 계속하기"}
           </Button>
         </CardContent>
       </Card>

@@ -28,7 +28,7 @@ export default async function AdminLayout({
         현재는 로그인한 모든 사용자가 접근 가능합니다.
       </div>
       <nav className="border-b">
-        <div className="mx-auto flex max-w-5xl gap-4 overflow-x-auto p-5 pb-0">
+        <div className="mx-auto flex max-w-7xl gap-4 overflow-x-auto p-5 pb-0">
           {ADMIN_NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -40,7 +40,7 @@ export default async function AdminLayout({
           ))}
         </div>
       </nav>
-      <main className="mx-auto max-w-5xl p-5">{children}</main>
+      <main className="mx-auto max-w-7xl p-5">{children}</main>
     </>
   );
 }

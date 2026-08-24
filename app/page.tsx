@@ -10,9 +10,9 @@ export default function Home() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl p-5">
+      <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">홈 / 상품 목록</h1>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {mockProducts.map((product) => (
             <ProductCard
               key={product.id}

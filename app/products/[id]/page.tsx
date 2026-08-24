@@ -28,7 +28,7 @@ export default async function ProductDetailPage({
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl p-5">
+      <main className="mx-auto max-w-7xl p-5">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           <div className="bg-muted relative aspect-square overflow-hidden rounded-xl">
             <Image

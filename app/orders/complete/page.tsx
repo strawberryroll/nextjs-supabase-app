@@ -16,7 +16,7 @@ export default function OrderCompletePage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl p-5">
+      <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">주문완료</h1>
         <p className="text-muted-foreground mt-2">
           주문이 정상적으로 접수되었습니다.

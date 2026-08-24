@@ -54,10 +54,8 @@ export function UpdatePasswordForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Reset Your Password</CardTitle>
-          <CardDescription>
-            Please enter your new password below.
-          </CardDescription>
+          <CardTitle className="text-2xl">비밀번호 재설정</CardTitle>
+          <CardDescription>아래에 새 비밀번호를 입력해주세요.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -67,12 +65,12 @@ export function UpdatePasswordForm({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="password">New password</FieldLabel>
+                    <FieldLabel htmlFor="password">새 비밀번호</FieldLabel>
                     <Input
                       {...field}
                       id="password"
                       type="password"
-                      placeholder="New password"
+                      placeholder="새 비밀번호"
                       aria-invalid={fieldState.invalid}
                     />
                     <FieldError errors={[fieldState.error]} />
@@ -81,7 +79,7 @@ export function UpdatePasswordForm({
               />
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save new password"}
+                {isLoading ? "저장 중..." : "새 비밀번호 저장"}
               </Button>
             </div>
           </form>

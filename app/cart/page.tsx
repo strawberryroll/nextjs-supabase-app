@@ -9,7 +9,7 @@ export default function CartPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl p-5">
+      <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">장바구니</h1>
         <CartView />
       </main>

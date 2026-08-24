@@ -23,7 +23,7 @@ export default function OrdersPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-5xl p-5">
+      <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">주문내역</h1>
         {orders.length === 0 ? (
           <div className="mt-6">
