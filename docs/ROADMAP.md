@@ -97,7 +97,7 @@
 
 ### Phase 3: 핵심 기능 구현
 
-- **Task 006: Supabase 스키마 설계 및 마이그레이션 파일 작성** - 우선순위
+- ✅ **Task 006: Supabase 스키마 설계 및 마이그레이션 파일 작성** - 우선순위
   - `supabase/migrations/`에 신규 마이그레이션 파일 작성(원격 적용은 Task 007에서 수행):
     - `profiles.role` 컬럼 추가 + 관리자 판별 헬퍼 + 권한 상승 방지책 마련
     - `products`(name, price, stock_quantity, threshold, description 등)
@@ -110,7 +110,7 @@
   - `lib/schemas/` 작성 — zod 스키마: `productSchema`(name/price/stock_quantity/threshold/description), `shippingSchema`(수령인/주소/연락처)
   - 관련 기능 ID: F009, F020, F022, F023
 
-- **Task 007: Supabase 스키마 원격 적용 및 타입 재생성**
+- ✅ **Task 007: Supabase 스키마 원격 적용 및 타입 재생성**
   - `mcp__supabase__list_tables`로 현재 원격 스키마 확인
   - Task 006에서 작성한 마이그레이션을 `mcp__supabase__apply_migration`으로 순차 적용(profiles.role → products → orders → order_items → purchase_orders)
   - `mcp__supabase__generate_typescript_types`로 `lib/supabase/database.types.ts` 재생성, `lib/types/commerce.ts`를 생성된 `Tables<>` 타입 기반으로 정리

@@ -14,12 +14,127 @@ export type Database = {
   };
   public: {
     Tables: {
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_price: number;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_price: number;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          product_id?: string;
+          quantity?: number;
+          unit_price?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey";
+            columns: ["order_id"];
+            isOneToOne: false;
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      orders: {
+        Row: {
+          address: string;
+          created_at: string;
+          id: string;
+          payment_key: string | null;
+          phone: string;
+          recipient: string;
+          status: string;
+          total_amount: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          address: string;
+          created_at?: string;
+          id?: string;
+          payment_key?: string | null;
+          phone: string;
+          recipient: string;
+          status?: string;
+          total_amount: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          address?: string;
+          created_at?: string;
+          id?: string;
+          payment_key?: string | null;
+          phone?: string;
+          recipient?: string;
+          status?: string;
+          total_amount?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      products: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          image_url: string | null;
+          name: string;
+          price: number;
+          stock_quantity: number;
+          threshold: number;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name: string;
+          price: number;
+          stock_quantity?: number;
+          threshold?: number;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          image_url?: string | null;
+          name?: string;
+          price?: number;
+          stock_quantity?: number;
+          threshold?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
           created_at: string;
           full_name: string | null;
           id: string;
+          role: string;
           updated_at: string;
           username: string | null;
         };
@@ -28,6 +143,7 @@ export type Database = {
           created_at?: string;
           full_name?: string | null;
           id: string;
+          role?: string;
           updated_at?: string;
           username?: string | null;
         };
@@ -36,17 +152,64 @@ export type Database = {
           created_at?: string;
           full_name?: string | null;
           id?: string;
+          role?: string;
           updated_at?: string;
           username?: string | null;
         };
         Relationships: [];
+      };
+      purchase_orders: {
+        Row: {
+          created_at: string;
+          id: string;
+          product_id: string;
+          requested_quantity: number;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          product_id: string;
+          requested_quantity: number;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          product_id?: string;
+          requested_quantity?: number;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      is_admin: { Args: never; Returns: boolean };
+      process_order_payment: {
+        Args: {
+          p_address: string;
+          p_items: Json;
+          p_payment_key: string;
+          p_phone: string;
+          p_recipient: string;
+          p_user_id: string;
+        };
+        Returns: {
+          order_id: string;
+          total_amount: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;
