@@ -118,12 +118,12 @@
   - `mcp__supabase__get_advisors`(security/performance)로 초기 경고 확인 및 기록
   - 관련 기능 ID: F003, F022
 
-- **Task 008: 상품 조회 및 장바구니 실데이터 연동**
-  - `lib/queries/products.ts` 작성 — 서버 클라이언트(`lib/supabase/server.ts`) 기반 `getProducts()`, `getProductById(id)`
-  - `app/page.tsx`, `app/products/[id]/page.tsx`의 더미 데이터를 실제 쿼리로 교체
-  - Cache Components 대응: 상품 목록/상세에 `"use cache"` + `cacheLife` 적용, 재고처럼 변동성 높은 영역은 `<Suspense>` 경계로 분리(route segment config 사용 금지)
-  - 장바구니(`hooks/use-cart.ts`)가 저장한 product_id로 서버에서 가격·재고를 재검증하는 로직 추가(클라이언트 가격 신뢰 금지)
-  - **테스트 체크리스트**: `mcp__playwright__*`로 홈 → 상품 상세 → 담기 → 장바구니 반영 확인, 품절 상품 담기 차단, 새로고침 후 장바구니 유지, 존재하지 않는 상품 ID 접근 시 404
+- ✅ **Task 008: 상품 조회 및 장바구니 실데이터 연동**
+  - `lib/queries/products.ts` 작성 — `getProducts()`, `getProductById(id)`(`"use cache"` + `cacheLife`, 쿠키 비의존 `lib/supabase/cached-client.ts` 사용), `getProductsByIds(ids)`(캐시 없음)
+  - `app/page.tsx`, `app/products/[id]/page.tsx`의 더미 데이터를 실제 쿼리로 교체, 존재하지 않는 상품은 `notFound()` → 404
+  - Cache Components 대응: `SiteHeader`(쿠키 접근)를 6개 페이지에서 `<Suspense>`로 분리해 정적 셸 prerender 확보, 동적 세그먼트 `params`는 자식 컴포넌트+Suspense로 재구성
+  - `lib/actions/cart.ts`(Server Action `revalidateCartItems`)로 장바구니(`hooks/use-cart.ts`)가 저장한 product_id의 가격·재고를 서버에서 재검증, `CartView`에 통합(품절/삭제/가격변경 배지, 수량 버튼 비활성화)
+  - **테스트 체크리스트**: `mcp__playwright__*`로 홈 → 상품 상세 → 담기 → 장바구니 반영 확인, 품절 상품 담기 차단, 새로고침 후 장바구니 유지, 존재하지 않는 상품 ID 접근 시 404 — 완료. 로그인 필요 라우트인 담기/재검증 시나리오는 사용자가 실제 브라우저에서 직접 확인
   - 관련 기능 ID: F003, F004, F005
 
 - **Task 009: 인증 가드 및 RLS 정책 적용**

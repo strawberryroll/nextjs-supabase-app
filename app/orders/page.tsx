@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderSkeleton } from "@/components/site-header-skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -22,7 +24,9 @@ export default function OrdersPage() {
 
   return (
     <>
-      <SiteHeader />
+      <Suspense fallback={<SiteHeaderSkeleton />}>
+        <SiteHeader />
+      </Suspense>
       <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">주문내역</h1>
         {orders.length === 0 ? (

@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderSkeleton } from "@/components/site-header-skeleton";
 import { CartView } from "@/components/cart-view";
 
 // SiteHeader의 getClaims() 호출(cookies 접근)이 Suspense 없이 발생해 prerender가 막힌다.
@@ -8,7 +10,9 @@ export const instant = false;
 export default function CartPage() {
   return (
     <>
-      <SiteHeader />
+      <Suspense fallback={<SiteHeaderSkeleton />}>
+        <SiteHeader />
+      </Suspense>
       <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">장바구니</h1>
         <CartView />

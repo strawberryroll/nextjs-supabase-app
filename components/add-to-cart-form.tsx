@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/use-cart";
 
@@ -22,7 +22,6 @@ export function AddToCartForm({
 }: AddToCartFormProps) {
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
-  const router = useRouter();
 
   return (
     <div className="mt-6 flex items-center gap-4">
@@ -52,7 +51,7 @@ export function AddToCartForm({
         disabled={!inStock}
         onClick={() => {
           addItem({ productId, name, price, imageUrl }, quantity);
-          router.push("/cart");
+          toast.success("장바구니에 담았습니다");
         }}
       >
         장바구니 담기

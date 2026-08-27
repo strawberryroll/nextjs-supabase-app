@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { SiteHeaderSkeleton } from "@/components/site-header-skeleton";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { mockOrders } from "@/lib/mock/orders";
@@ -15,7 +17,9 @@ export default function OrderCompletePage() {
 
   return (
     <>
-      <SiteHeader />
+      <Suspense fallback={<SiteHeaderSkeleton />}>
+        <SiteHeader />
+      </Suspense>
       <main className="mx-auto max-w-7xl p-5">
         <h1 className="text-2xl font-bold">주문완료</h1>
         <p className="text-muted-foreground mt-2">
