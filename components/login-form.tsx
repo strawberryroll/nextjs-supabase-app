@@ -1,6 +1,6 @@
 "use client";
 
-import { cn, getErrorMessage } from "@/lib/utils";
+import { cn, getErrorMessage, getSafeRedirectPath } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,8 +22,9 @@ import { Controller, useForm } from "react-hook-form";
 
 export function LoginForm({
   className,
+  redirectTo,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & { redirectTo?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -42,7 +43,7 @@ export function LoginForm({
     try {
       const { error } = await supabase.auth.signInWithPassword(values);
       if (error) throw error;
-      router.push("/");
+      router.push(getSafeRedirectPath(redirectTo));
     } catch (error: unknown) {
       setError(getErrorMessage(error));
     } finally {
@@ -59,7 +60,7 @@ export function LoginForm({
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(getSafeRedirectPath(redirectTo))}`,
         },
       });
       if (error) throw error;

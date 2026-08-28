@@ -23,10 +23,6 @@ export default async function AdminLayout({
   return (
     <>
       <SiteHeader />
-      <div className="bg-yellow-100 p-2 text-center text-sm text-yellow-900 dark:bg-yellow-900 dark:text-yellow-100">
-        ⚠️ 임시: 관리자 role 체크 미구현 (Phase 3 Task 009에서 교체 예정).
-        현재는 로그인한 모든 사용자가 접근 가능합니다.
-      </div>
       <nav className="border-b">
         <div className="mx-auto flex max-w-7xl gap-4 overflow-x-auto p-5 pb-0">
           {ADMIN_NAV_ITEMS.map((item) => (
