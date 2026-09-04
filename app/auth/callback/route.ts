@@ -1,3 +1,4 @@
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/server";
 import { getSafeRedirectPath } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -15,9 +16,13 @@ export async function GET(request: NextRequest) {
     if (!error) {
       redirect(next);
     } else {
-      redirect(`/auth/error?error=${error?.message}`);
+      redirect(
+        `/auth/error?error=${encodeURIComponent(getAuthErrorMessage(error))}`,
+      );
     }
   }
 
-  redirect(`/auth/error?error=No code provided`);
+  redirect(
+    `/auth/error?error=${encodeURIComponent("인증 코드가 제공되지 않았습니다")}`,
+  );
 }

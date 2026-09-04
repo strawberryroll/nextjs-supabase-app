@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, getErrorMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,7 +51,7 @@ export function ForgotPasswordForm({
       if (error) throw error;
       setSuccess(true);
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

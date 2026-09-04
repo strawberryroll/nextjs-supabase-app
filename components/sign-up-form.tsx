@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, getErrorMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +41,7 @@ export function SignUpForm({
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -48,9 +49,13 @@ export function SignUpForm({
         },
       });
       if (error) throw error;
+      if (data.user && data.user.identities?.length === 0) {
+        setError("이미 가입된 이메일입니다. 로그인을 시도해주세요.");
+        return;
+      }
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +75,7 @@ export function SignUpForm({
       });
       if (error) throw error;
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
       setIsGoogleLoading(false);
     }
   };

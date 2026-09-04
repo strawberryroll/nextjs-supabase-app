@@ -11,9 +11,7 @@ async function ErrorContent({
   return (
     <>
       {params?.error ? (
-        <p className="text-muted-foreground text-sm">
-          오류 코드: {params.error}
-        </p>
+        <p className="text-muted-foreground text-sm">오류: {params.error}</p>
       ) : (
         <p className="text-muted-foreground text-sm">
           알 수 없는 오류가 발생했습니다.

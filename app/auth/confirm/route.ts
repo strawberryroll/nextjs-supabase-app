@@ -1,3 +1,4 @@
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/server";
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { redirect } from "next/navigation";
@@ -21,10 +22,14 @@ export async function GET(request: NextRequest) {
       redirect(next);
     } else {
       // redirect the user to an error page with some instructions
-      redirect(`/auth/error?error=${error?.message}`);
+      redirect(
+        `/auth/error?error=${encodeURIComponent(getAuthErrorMessage(error))}`,
+      );
     }
   }
 
   // redirect the user to an error page with some instructions
-  redirect(`/auth/error?error=No token hash or type`);
+  redirect(
+    `/auth/error?error=${encodeURIComponent("인증 정보가 올바르지 않습니다")}`,
+  );
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, getErrorMessage } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +45,7 @@ export function UpdatePasswordForm({
       if (error) throw error;
       router.push("/");
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 "use client";
 
-import { cn, getErrorMessage, getSafeRedirectPath } from "@/lib/utils";
+import { cn, getSafeRedirectPath } from "@/lib/utils";
+import { getAuthErrorMessage } from "@/lib/auth/error-messages";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +46,7 @@ export function LoginForm({
       if (error) throw error;
       router.push(getSafeRedirectPath(redirectTo));
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +66,7 @@ export function LoginForm({
       });
       if (error) throw error;
     } catch (error: unknown) {
-      setError(getErrorMessage(error));
+      setError(getAuthErrorMessage(error));
       setIsGoogleLoading(false);
     }
   };
