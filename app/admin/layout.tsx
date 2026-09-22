@@ -2,8 +2,10 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { SiteHeader } from "@/components/site-header";
 
-// requireAdmin()의 cookies() 접근이 Suspense 없이 발생해 prerender가 막힌다.
-// TODO(Phase 3): 실데이터 연동 시 "use cache"/<Suspense> 도입과 함께 재검토.
+// requireAdmin()이 인증 실패 시 redirect()를 호출하며, redirect()는 Suspense나
+// "use cache: private" 스코프에서 사용할 수 없어 이 layout 자체가 블로킹될
+// 수밖에 없다(cart/checkout/orders 등 다른 곳은 SiteHeader만 Suspense로
+// 감싸는 것으로 충분해 instant=false 없이도 통과함 — admin/layout은 구조가 다름).
 export const instant = false;
 
 const ADMIN_NAV_ITEMS = [
