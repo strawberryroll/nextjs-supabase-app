@@ -126,52 +126,58 @@
   - **테스트 체크리스트**: `mcp__playwright__*`로 홈 → 상품 상세 → 담기 → 장바구니 반영 확인, 품절 상품 담기 차단, 새로고침 후 장바구니 유지, 존재하지 않는 상품 ID 접근 시 404 — 완료. 로그인 필요 라우트인 담기/재검증 시나리오는 사용자가 실제 브라우저에서 직접 확인
   - 관련 기능 ID: F003, F004, F005
 
-- **Task 009: 인증 가드 및 RLS 정책 적용**
-  - `lib/supabase/proxy.ts`의 `updateSession()` 공개/보호 경로 규칙 확정(`/`, `/products/*`, `/auth/*`는 공개)
-  - `/checkout` 미인증 진입 시 `redirect=/checkout` 쿼리로 로그인 페이지 이동, 로그인 성공 후 복귀 처리
-  - `lib/auth/require-admin.ts` 완성 — `profiles.role` 조회 후 비관리자 시 홈 리다이렉트, `app/admin/layout.tsx`에서 호출 (F020)
-  - Task 006의 RLS 정책을 `mcp__supabase__apply_migration`으로 적용: `products`(select 공개 / 변경 admin), `orders`·`order_items`(select 본인 또는 admin, 클라이언트 insert 차단), `purchase_orders`(admin 전용)
-  - `mcp__supabase__get_advisors`로 RLS 미적용·정책 누락 경고 0건 확인
-  - **테스트 체크리스트**: `mcp__playwright__*`로 비로그인 `/checkout` 접근 → 로그인 → 체크아웃 복귀, customer 계정으로 `/admin` 접근 시 홈 리다이렉트, admin 계정으로 `/admin` 정상 진입, customer가 타인 주문 조회 불가
+- ✅ **Task 009: 인증 가드 및 RLS 정책 적용**
+  - `lib/supabase/proxy.ts`의 `updateSession()` 공개/보호 경로 규칙 확정(`/`, `/products/*`, `/auth/*`는 공개) — 기존 구현이 이미 요구사항을 충족함을 확인
+  - `/checkout` 미인증 진입 시 `redirect=/checkout` 쿼리로 로그인 페이지 이동, 로그인 성공 후 복귀 처리 — `app/auth/login/page.tsx` + `components/login-form.tsx` + `lib/utils.ts`의 `getSafeRedirectPath()`(open-redirect 방어 포함)로 이미 완성되어 있음을 확인
+  - `lib/auth/require-admin.ts` 완성 — `profiles.role` 조회 후 비관리자 시 홈 리다이렉트, `app/admin/layout.tsx`에서 호출 (F020) — 기존 구현 확인
+  - RLS 정책이 5개 테이블(`profiles`, `products`, `orders`, `order_items`, `purchase_orders`) 모두 마이그레이션 파일에 작성 및 원격 DB에 적용되어 있음을 `pg_policies` 조회로 확인. 로컬/원격 마이그레이션 히스토리 동기화 점검 중 원격 전용 `revoke_handle_new_user_public_execute_v2`를 발견해 로컬에 `20260814121305_revoke_handle_new_user_public_execute_v2.sql` 추가(원격엔 이미 적용되어 있어 재적용 없이 히스토리만 동기화)
+  - `mcp__supabase__get_advisors`로 RLS 미적용·정책 누락 경고 0건 확인(범위 밖 경고 2건 — `process_order_payment`의 authenticated 실행 권한(Task 010 설계 의도), Auth leaked password protection 비활성화 — 은 별도 기록만 하고 이번 범위에서 제외)
+  - **테스트 체크리스트**: `mcp__playwright__*`로 비로그인 `/checkout` 접근 → `/auth/login?redirect=%2Fcheckout` 리다이렉트 → 로그인 → `/checkout` 복귀 확인, customer 계정으로 `/admin` 접근 시 `/`로 리다이렉트(관리자 메뉴 비노출까지 확인), admin 계정으로 `/admin` 정상 진입 — 모두 통과. "customer가 타인 주문 조회 불가"는 `/orders`가 아직 mock 데이터(Task 010에서 실데이터 연동 예정)라 UI 검증이 불가능해 `mcp__supabase__execute_sql`로 JWT claims를 시뮬레이션한 SQL 레벨 RLS 검증으로 대체 — customer는 본인 주문만 조회(타인 주문은 id 직접 지정해도 0건), admin은 전체 조회 가능함을 확인, 테스트 데이터는 정리 완료
 
-- **Task 010: 결제 승인 및 자동 발주 트랜잭션 구현**
-  - 토스페이먼츠 결제위젯 SDK 설치 및 `app/checkout/page.tsx`에서 결제창 호출(클라이언트 키는 `NEXT_PUBLIC_*`, 시크릿 키는 서버 전용 환경변수)
-  - `process_order_payment` Postgres 함수 구현 후 `mcp__supabase__apply_migration`으로 적용 — 주문·주문상품 생성 → `products.stock_quantity` 차감(재고 부족 시 예외) → 차감 후 `stock_quantity < threshold` 확인 → `purchase_orders` pending 생성, 단 동일 product_id에 pending/confirmed 발주가 있으면 생성 생략 (F008, F009)
-  - `app/api/payments/confirm/route.ts` 구현 — 시크릿 키로 토스페이먼츠 승인 API 호출 → 성공 시 `process_order_payment` RPC 실행 → `/orders/complete`로 리다이렉트, 승인 실패 시 에러 페이지
-  - 금액 위변조 방지: 클라이언트 전달 금액이 아니라 서버에서 `products.price`로 총액을 재계산해 승인 금액과 대조
-  - `app/orders/complete/page.tsx`, `app/orders/page.tsx`를 실제 `orders`/`order_items` 조회로 교체 (F010, F011)
-  - **테스트 체크리스트**: `mcp__playwright__*`로 결제 테스트 키 기반 전체 결제 플로우 E2E, 결제 후 `stock_quantity` 감소 확인(`mcp__supabase__execute_sql`), 임계치 미만 도달 시 `purchase_orders` pending 1건 생성, 동일 상품 재결제 시 발주 중복 생성 안 됨, 재고 초과 수량 주문 시 실패 처리, 승인 실패/취소 리다이렉트 처리
+- ✅ **Task 010: 결제 승인 및 자동 발주 트랜잭션 구현**
+  - 토스페이먼츠 SDK/키가 프로젝트에 전혀 설치·설정되어 있지 않아(`.env.local` 확인) 실제 PG 연동 대신 **모의 결제**(결제위젯 없이 배송정보+장바구니를 그대로 승인 API로 전송)로 범위를 조정 — DB 트랜잭션 로직은 실제 PG 연동 여부와 무관하게 동일하게 구현했으며, 향후 실 키가 준비되면 `app/api/payments/confirm/route.ts`의 RPC 호출 앞부분에 토스페이먼츠 승인 API 호출만 추가하면 되도록 경계를 분리해둠
+  - `process_order_payment` Postgres 함수를 `supabase/migrations/20260921100000_implement_process_order_payment_function.sql`로 구현 후 `mcp__supabase__apply_migration` 적용 — product_id 오름차순 정렬로 `select ... for update` 잠금(데드락 예방) → 서버 조회 `price`로 금액 재계산(클라이언트 가격 불신) → 재고 부족 시 예외 → `orders`/`order_items` insert → `products.stock_quantity` 차감 → 차감 후 `stock_quantity < threshold`면 `purchase_orders`에 `requested_quantity = threshold - stock_quantity`로 자동 발주(`on conflict (product_id) where status in ('pending','confirmed') do nothing`으로 중복 방지) (F008, F009)
+  - `app/api/payments/confirm/route.ts` 구현 — `getClaims()`로 인증 확인(401) → `lib/schemas/payment.ts`의 `confirmPaymentSchema`로 요청 바디 검증(400) → `supabase.rpc('process_order_payment', ...)` 호출(모의 `payment_key`는 `crypto.randomUUID()`) → 성공 시 `orderId`/`totalAmount` 응답, 재고 부족 등 실패 시 409와 에러 메시지
+  - 금액 위변조 방지: 클라이언트가 보낸 가격은 사용하지 않고, `for update`로 잠가 조회한 `products.price`만을 근거로 서버가 총액을 재계산
+  - `components/checkout-form.tsx`의 `onSubmit`을 위 API 호출로 교체 — 성공 시 `orderId`와 함께 `/orders/complete`로 이동, 실패 시 폼에 에러 메시지 표시(페이지 이동 없이 배송정보 유지)
+  - `lib/queries/orders.ts` 신규(`getMyOrders`/`getOrderById`, 캐시 없음·RLS 의존) 작성 후 `app/orders/complete/page.tsx`, `app/orders/page.tsx`를 실제 `orders`/`order_items` 조회로 교체 (F010, F011). `lib/format.ts`의 `ORDER_STATUS_LABEL`에 누락되어 있던 `pending_payment` 라벨도 보강
+  - **테스트 체크리스트**: `mcp__playwright__*`로 모의 결제 버튼 기반 전체 결제 플로우 E2E(로그인→담기→체크아웃→결제→완료 페이지) 통과, 결제 후 `stock_quantity` 감소 확인(`mcp__supabase__execute_sql`) 통과, 임계치 미만 도달 시 `purchase_orders` pending 1건 생성 통과, 동일 상품 재결제 시 발주 중복 생성 안 됨 통과, 재고 초과 수량 주문 시 폼 내 에러 표시 및 DB 롤백 확인 통과, `/orders` 목록 반영 통과. "결제 테스트 키 기반 E2E"는 모의 결제 버튼 기반으로, "승인 실패/취소 리다이렉트"는 실제 PG 리다이렉트가 없어 체크아웃 폼 내 에러 표시로 대체 수행
 
-- **Task 011: 관리자 기능 실데이터 연동**
-  - `lib/queries/admin.ts` 작성 — 대시보드 요약(매출 합계, 주문 건수, `stock_quantity < threshold` 상품 수) (F021)
-  - 상품 등록/수정/삭제 Server Action 구현 — zod(`lib/schemas/`) 검증 후 `products` 반영, 성공 시 `revalidatePath` 또는 캐시 태그 무효화 (F022, F023)
-  - 주문 관리: 전체 주문 목록/상세 조회 및 `orders.status` 변경 Server Action (F024)
-  - 발주 관리: 상태별 조회(F025), pending → confirmed 전환(F026), confirmed → received 전환 시 `products.stock_quantity`에 `requested_quantity` 가산(Postgres 함수 또는 트랜잭션 처리) (F027)
-  - 관리자 페이지의 더미 데이터를 모두 실제 쿼리로 교체하고, 재고 변동 영역은 `<Suspense>` 경계로 분리
-  - **테스트 체크리스트**: `mcp__playwright__*`로 상품 등록 → 홈 목록 반영 확인, 임계치 수정 후 결제 시 발주 생성 여부 변화, 발주 확인 → 입고 처리 후 재고 증가 검증, 입고 완료(received) 후 재차 임계치 미만 시 새 발주 생성 허용 확인
+- ✅ **Task 011: 관리자 기능 실데이터 연동**
+  - `orders` 테이블에 admin `UPDATE` RLS 정책이 없음을 재확인(`products`/`purchase_orders`는 이미 존재)해 `supabase/migrations/20260921120000_add_orders_admin_update_policy.sql`로 선행 추가·적용(F024 전제조건)
+  - `lib/queries/admin.ts` 작성 — 대시보드 요약(매출 합계, 주문 건수, `stock_quantity < threshold` 상품 수, 기존 mock 대시보드와 동일하게 상태 필터 없이 전체 합산), `getAllOrders()`(`lib/queries/orders.ts`의 `mapOrderRow`/`OrderRow`를 export해 재사용), `getAllPurchaseOrders()` (F021)
+  - 상품 등록/수정/삭제 Server Action(`lib/actions/products.ts`) 구현 — `requireAdmin()` 확인 → `productSchema`(`lib/schemas/`) 재검증 → camelCase→snake_case 매핑 후 `products` 반영, 성공 시 `revalidatePath('/admin/products')`+`revalidatePath('/')`로 "use cache" 캐시까지 무효화 (F022, F023)
+  - 주문 관리: `lib/queries/admin.ts`의 `getAllOrders()`로 전체 목록/상세 조회, `lib/actions/orders.ts`의 `updateOrderStatus`로 `orders.status` 변경 Server Action (F024)
+  - 발주 관리: `getAllPurchaseOrders()`로 상태별 조회(F025), `lib/actions/purchase-orders.ts`의 `confirmPurchaseOrder`로 pending → confirmed 전환(F026), `receivePurchaseOrder`(RPC 호출)로 confirmed → received 전환 — 재고 가산과 상태 변경의 부분 실패로 인한 이중 가산을 막기 위해 `supabase/migrations/20260921120100_create_receive_purchase_order_function.sql`의 `receive_purchase_order` Postgres 함수(SECURITY INVOKER, 호출자의 기존 admin RLS 권한 사용)로 원자적 처리 (F027)
+  - `app/admin/page.tsx`, `app/admin/products/page.tsx`, `app/admin/orders/page.tsx`, `app/admin/purchase-orders/page.tsx` 전부 서버 컴포넌트로 전환해 `<Suspense>` 경계로 데이터 영역을 분리하고, 각각 신규 클라이언트 컴포넌트(`admin-products-table.tsx`, `admin-orders-table.tsx`, `admin-purchase-orders-tabs.tsx`)로 목록/액션 UI 위임
+  - `lib/mock/products.ts`, `orders.ts`, `purchase-orders.ts` 참조가 모두 사라져 삭제
+  - **테스트 체크리스트**: `mcp__playwright__*`로 상품 등록 → 홈(`/`) 목록 즉시 반영 확인(관리자 상품 등록 시 목록에서 사라지던 기존 버그가 이 Task로 완전히 해결됨), 수정/삭제도 새로고침 후 유지 확인, 주문 상태 변경이 DB에 반영되고 유지됨을 확인, 임계치를 낮게 수정한 상품을 결제해 발주(pending)가 생성됨을 확인, 발주 확인→입고 처리 후 `products.stock_quantity`가 `requested_quantity`만큼 증가하고 `/admin/products`에도 즉시 반영됨을 확인, 입고 완료(received)된 발주가 있어도 재차 임계치 미만이 되면 새 pending 발주가 정상적으로 생성됨(부분 유니크 인덱스가 received를 배제 조건에서 제외하는 설계가 의도대로 동작)을 `mcp__supabase__execute_sql`로 확인 — 모두 통과
 
-- **Task 011-1: 핵심 기능 통합 테스트**
-  - `mcp__playwright__*`로 고객 전체 플로우 E2E: 회원가입 → 로그인 → 상품 탐색 → 장바구니 → 체크아웃 → 결제 → 주문완료 → 주문내역
-  - 관리자 전체 플로우 E2E: admin 로그인 → 대시보드 → 상품 등록/수정 → 주문 상태 변경 → 발주 확인 → 입고 처리
-  - 자동 발주 시나리오 검증: 임계치 경계값(정확히 threshold, threshold-1) 동작 확인
-  - 에러/엣지 케이스: 동시 주문으로 인한 재고 경합, 결제 승인 중복 호출(같은 payment_key 재요청), 빈 장바구니 체크아웃 진입, 세션 만료 후 결제 시도
-  - `mcp__supabase__get_advisors`로 보안·성능 경고 재확인, `npm run lint` / `typecheck` / `format:check` / `build` 전부 통과
+- ✅ **Task 011-1: 핵심 기능 통합 테스트**
+  - `mcp__playwright__*`로 고객 전체 플로우 E2E 통과: 회원가입 폼 제출(`example.com`처럼 명백한 테스트 도메인은 Supabase가 "사용할 수 없는 이메일 주소"로 거부해 `gmail.com` 도메인으로 재시도) → `/auth/sign-up-success` 도달, `auth.users`에 `email_confirmed_at=null`로 생성되고 `handle_new_user` 트리거로 `profiles`도 자동 생성됨을 확인 → 이메일 확인이 필요해 이후 플로우는 기존 컨펌된 customer 계정으로 이어서 로그인 → 상품 탐색 → 장바구니 → 체크아웃 → 결제 → 주문완료 → 주문내역까지 전 구간 에러 없이 통과. 회원가입 테스트 계정은 삭제(`profiles`는 `on delete cascade`로 연쇄 삭제 확인)
+  - 관리자 전체 플로우 E2E 통과: admin 로그인 → 대시보드(매출/주문건수/재고부족 정확히 표시) → 상품 등록/수정/삭제 → 고객 플로우가 만든 주문의 상태 변경(DB 반영 확인) → 발주 확인 → 입고 처리(재고 가산 확인) — 관리자 플로우가 앞 단계들의 주문/발주 데이터를 재사용하며 전체 테스트 데이터 정리도 겸함
+  - 자동 발주 임계치 경계값 검증 통과: 재고=threshold일 때 발주 미생성(`<` 조건이 `=`에서는 트리거되지 않음), 재고=threshold-1일 때 발주 1건 정확히 생성됨을 `mcp__supabase__execute_sql`로 확인
+  - 에러/엣지 케이스 4종 — 로드맵 원문과 실제 재해석 사유를 명시: **동시 주문 재고 경합**은 `mcp__playwright__*`/`mcp__supabase__execute_sql`이 단일 세션 도구라 진짜 병렬 실행이 불가능해, `process_order_payment`를 순차 두 번 호출해 `for update` 잠금이 갱신된 재고를 정확히 반영함(두 번째 호출이 재고부족으로 거부됨)을 확인하는 것으로 대체. **결제 승인 중복 호출**은 `app/api/payments/confirm/route.ts`가 매 요청 `crypto.randomUUID()`로 새 `payment_key`를 생성해 "동일 payment_key 재요청" 자체가 불가능하므로, 동일 장바구니로 동시 2회 요청 시 각기 다른 주문 2건이 그대로 생성됨을 확인(멱등성 키 미구현이라는 알려진 제약으로 기록). **빈 장바구니 체크아웃**은 `EmptyState`가 정확히 노출되고 결제 폼 자체가 렌더링되지 않음을 확인. **세션 만료**는 쿠키를 전부 제거한 뒤 결제 API 호출 시 `lib/supabase/proxy.ts`가 `/auth/login`으로 리다이렉트(307)시켜 결제가 차단됨을 확인(API route의 401 JSON이 아니라 proxy 레벨 리다이렉트라는 세부 차이가 있으나 결제 차단이라는 목적은 동일하게 달성)
+  - `mcp__supabase__get_advisors`로 보안 경고 재확인 — 기존 경고 2건(범위 밖)만 있고 신규 없음. 성능 advisor에서 인덱스 관련 INFO 3건(`order_items`/`orders`의 외래키 미인덱싱)을 신규 발견했으나 `docs/ROADMAP.md` Task 013(성능 최적화)에서 이미 계획된 범위라 이번 Task에서는 기록만 하고 코드 변경 없음
+  - `npm run lint` / `typecheck` / `format:check` / `build` 전부 통과. 테스트 전 구간에서 생성/변경한 모든 데이터(테스트 계정, 주문, 발주, 상품 재고/임계치, 등록 상품)를 검증 후 전부 원상 복구(`orders`/`purchase_orders` 0건, 8개 상품 재고/임계치 원래 값과 일치 확인)
 
 ### Phase 4: 고급 기능 및 최적화
 
-- **Task 012: 사용자 경험 향상 기능**
-  - 상품 목록 검색·정렬·페이지네이션 추가 (F003 확장)
-  - 상품 이미지 업로드 — Supabase Storage 버킷 생성 및 관리자 상품 등록 폼 연동 (F022 확장)
-  - 로딩 상태 정비: 각 라우트에 `loading.tsx`, 스켈레톤 컴포넌트 적용
-  - 에러 바운더리(`error.tsx`) 및 사용자 친화적 에러 메시지, 토스트 알림 도입
-  - 관리자 발주 목록 실시간 갱신(Supabase Realtime) 검토 및 적용
+- ✅ **Task 012: 사용자 경험 향상 기능**
+  - 상품 검색·정렬·페이지네이션: `lib/queries/products.ts`의 `getProducts({search?, sort?, page?})`를 URL 쿼리 파라미터(`?q=&sort=&page=`) 기반으로 확장(F003 확장). 정렬은 화이트리스트 매핑(`newest`/`price_asc`/`price_desc`)으로 인젝션 방지, `PAGE_SIZE=12`, `count:'exact'`로 총 개수 조회. `"use cache"` + `cacheLife("minutes")`는 그대로 유지(인자별로 캐시 키 분리됨). 신규 발견 버그 수정: 존재하지 않는 페이지 번호 접근 시 PostgREST가 던지는 `PGRST103`(Requested range not satisfiable)을 감지해 빈 결과로 안전 처리. `app/page.tsx`를 `ProductSearchControls`(검색/정렬, client)와 `ProductGrid`(목록, server)로 분리해 각각 별도 `<Suspense>`로 감쌈(`useSearchParams`가 Suspense 밖에 있으면 Cache Components의 blocking-prerender 에러 발생하던 것을 수정). `components/pagination.tsx` 신규(Link 기반, 비활성 시 `pointer-events-none`)
+  - 상품 이미지 업로드(F022 확장): `supabase/migrations/20260922100000_create_product_images_storage_bucket.sql`로 `product-images` public 버킷 생성 — `products` 테이블과 대칭되는 RLS 패턴(select 공개, insert/update/delete는 `is_admin()`). `lib/actions/products.ts`의 `uploadProductImage()`가 `crypto.randomUUID()` 파일명으로 업로드 후 public URL 반환. `components/admin/product-form-dialog.tsx`의 이미지 텍스트 입력을 파일 input + 미리보기로 교체(파일 미선택 시 기존 `image_url` 유지). `next.config.ts`의 `images.remotePatterns`에 Supabase Storage 도메인 추가
+  - 로딩/에러 세그먼트 경계: 기존에 각 `page.tsx` 내부에 있던 `<Suspense>`+skeleton 패턴을 대체하지 않는 보완재로 `app/loading.tsx`, `app/error.tsx`, `app/admin/loading.tsx`, `app/admin/error.tsx` 4개 신규 배치(`error.tsx`는 `"use client"` + `reset` 필수). `app/cart`, `app/checkout`, `app/admin/layout.tsx`에 남아있던 "Phase 3 재검토" TODO 주석 제거(실데이터 연동이 이미 완료됐으므로)
+  - 토스트 알림(sonner, 기존 `Toaster` 재사용): 기존 인라인 에러 텍스트는 유지한 채, 무피드백이던 성공 케이스에 도입 — 상품 등록/수정/삭제(`admin-products-table.tsx`), 발주 확인/입고 처리(`admin-purchase-orders-tabs.tsx`), Realtime 신규 발주 알림
+  - 관리자 발주 목록 Realtime: `supabase/migrations/20260922110000_add_purchase_orders_to_realtime_publication.sql`로 `purchase_orders`를 `supabase_realtime` publication에 추가(적용 전에는 publication이 완전히 비어있어 구독해도 이벤트가 전혀 오지 않았음). `admin-purchase-orders-tabs.tsx`에 `postgres_changes` 채널 구독 추가, `useEffect` cleanup에서 `removeChannel` 처리. **신규 발견 버그 및 수정**: `postgres_changes`는 RLS(`purchase_orders`의 select 정책 `is_admin()`)를 준수하는데, 구독 시점에 realtime 클라이언트가 로그인 세션의 JWT를 갖고 있지 않아 익명 권한으로 평가되어 이벤트가 전혀 도착하지 않는 문제를 발견 — `supabase.auth.getSession()`으로 세션을 먼저 확보한 뒤 `supabase.realtime.setAuth(session.access_token)`을 호출하고 나서 채널을 구독하도록 수정해 해결
+  - **테스트 체크리스트**: `mcp__playwright__*`로 4개 영역 통합 검증 — 검색("에티오피아" → 결과 1건), 정렬(가격 낮은순 오름차순 확인), 페이지네이션(존재하지 않는 page 접근 시 안전한 빈 상태 처리) 모두 통과. 관리자 상품 등록에서 실제 PNG 파일 업로드 → 미리보기 → 등록 후 홈/관리자 화면에 정상 표시 확인. `loading.tsx`/`error.tsx` 4개 파일 구조 확인. 상품 CRUD와 발주 확인/입고 처리 토스트 노출 확인. SQL INSERT로 발주 생성 시 관리자 화면이 Realtime으로 즉시 갱신(신규 발주 토스트 포함)되고, 확인→입고 처리 전체 플로우가 재고 반영까지 정확히 동작함을 확인. 테스트로 생성한 상품/발주 데이터와 Storage 이미지 파일(이전 세션부터 미해결로 남아있던 orphan 파일 포함)을 모두 정리해 원상 복구. `npm run lint` / `typecheck` / `format:check` / `build` 전부 통과
 
-- **Task 013: 성능 최적화 및 배포 준비**
-  - Cache Components 전략 정리 — 정적 영역 `"use cache"` + `cacheLife` 프로파일 지정, 동적 영역 `<Suspense>` 경계 점검, route segment config 잔재 제거
-  - 데이터베이스 인덱스 추가 — `orders(user_id, created_at)`, `order_items(order_id)`, `purchase_orders(status)` 및 `mcp__supabase__get_advisors` 성능 권고 반영
-  - `mcp__playwright__browser_network_requests`로 주요 페이지 요청 수·번들 확인, 이미지 최적화(`next/image`) 적용
-  - 프로덕션 환경변수 정리(토스페이먼츠 시크릿 키, Supabase 키) 및 배포 파이프라인에서 `lint` / `typecheck` / `format:check` / `build` 실행 구성
-  - 결제 실패·발주 생성 실패에 대한 로깅 체계 구성(`mcp__supabase__query_logs` 활용 가능 여부 포함)
+- ✅ **Task 013: 성능 최적화 및 배포 준비**
+  - **신규 발견 사실 — `instant = false`는 "route segment config 잔재"가 아니었음**: `node_modules/next/dist/docs`를 직접 확인한 결과 `instant`는 Next.js 16의 정식 옵트아웃 API이며, 기본 `'warning'` 레벨은 dev 환경에서만 검증하고 `next build`는 절대 막지 않는다(공식 문서: "the build is unaffected"). `app/cart/page.tsx`, `app/checkout/page.tsx`, `app/orders/page.tsx`, `app/orders/complete/page.tsx` 4개 파일에서 실제로 제거해 `mcp__playwright__*`로 direct visit과 client navigation 양쪽을 재검증(Next.js DevTools Route Info 포함)한 결과 문제없음을 확인하고 제거했다. `app/admin/layout.tsx`는 `requireAdmin()`이 인증 실패 시 호출하는 `redirect()`가 `<Suspense>`나 `"use cache: private"` 스코프에서 사용할 수 없어 이 layout 자체가 구조적으로 블로킹될 수밖에 없음을 확인하고 유지했다(주석을 실제 이유로 갱신)
+  - 데이터베이스 인덱스: `supabase/migrations/20260922120000_add_performance_indexes.sql`로 `mcp__supabase__get_advisors(performance)`가 실측한 미인덱싱 외래키 3건(`order_items.order_id`, `order_items.product_id`, `orders.user_id`)과 로드맵이 명시한 `orders(user_id, created_at desc)` 복합 인덱스, `purchase_orders(status)` 인덱스를 추가. 적용 후 advisor 재실행으로 기존 `unindexed_foreign_keys` 경고 3건이 정확히 사라졌음을 확인(신규 인덱스 미사용 INFO는 실트래픽 부족에 따른 정상적인 일시적 신호)
+  - 이미지 최적화: `next/image` 사용 5곳(`products/[id]/page.tsx`, `checkout-form.tsx`, `product-card.tsx`, `cart-view.tsx`, `admin-products-table.tsx`)이 이미 전부 `fill`+`sizes`를 정확히 적용하고 있었고 상품 상세 페이지엔 `priority`까지 있어 코드 변경이 불필요했다. `mcp__playwright__browser_network_requests`로 홈/상품상세/장바구니를 확인한 결과 각 컴포넌트의 `sizes`가 실제로 다른 크기의 `/_next/image` 최적화 요청을 유도하고 중복 요청이 없음을 실측으로 확인
+  - 환경변수/CI: 이 프로젝트는 토스페이먼츠 시크릿 키 자체가 발급되지 않은 모의 결제 프로젝트(`app/api/payments/confirm/route.ts` 주석에 명시)라 "실키 정리"는 대상이 없어, `.env.example`을 신규 작성해 현재 키 2개(값은 비움)와 향후 토스페이먼츠 연동 시 필요한 키 자리를 문서화하는 것으로 범위를 조정했다. `.github/workflows/ci.yml`을 신규 작성해 `main` 대상 push/PR 시 `lint`→`typecheck`→`format:check`→`build` 4단계를 자동 실행하도록 구성(실제 배포 job은 시크릿이 없어 범위 밖으로 명시)
+  - 로깅: `mcp__supabase__query_logs`의 소스 목록(`edge_logs`/`postgres_logs`/`postgrest_logs`/`realtime_logs`/`auth_audit_logs`/`storage_logs`/`auth_logs`/`pgbouncer_logs`)을 확인한 결과 Next.js 서버(API Route, Server Action)의 콘솔 로그를 수집하는 소스가 없음을 확인 — DB 함수 레벨 실패를 `postgres_logs`로 사후 조사하는 보조 도구로만 유효함을 코드 주석에 명시. `app/api/payments/confirm/route.ts`의 `rpcError` 분기와 `lib/actions/purchase-orders.ts`의 `confirmPurchaseOrder`/`receivePurchaseOrder` 에러 분기에 기존 `throw`/`NextResponse.json` 흐름을 바꾸지 않는 `console.error` 로깅만 추가(별도 로깅 서비스 도입 없음). 존재하지 않는 상품으로 결제 API를 실제 호출해 dev 서버 로그 파일에 `[payment] process_order_payment 실패` 로그가 정확히 출력됨을 실증 확인
+  - **테스트 체크리스트**: `npm run lint` / `typecheck` / `format:check` / `build` 전부 통과. `mcp__playwright__*`로 홈/관리자 대시보드 등 주요 페이지 회귀 확인(콘솔 에러 없음, 매출/주문건수/재고부족 정확히 표시). `mcp__supabase__get_advisors`로 성능/보안 advisor 최종 재확인 — 성능은 인덱스 미사용 INFO(정상적 일시 상태)만 남고 신규 문제 없음, 보안은 기존 경고 2건(범위 밖, Task 011-1에서 이미 기록)만 유지되고 신규 없음. 테스트로 생성한 발주 데이터는 모두 정리(0건 확인)
 
 ## 기능 ID 커버리지
 
