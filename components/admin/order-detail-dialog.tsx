@@ -17,12 +17,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatCurrencyKRW, ORDER_STATUS_LABEL } from "@/lib/format";
-import type { MockOrder, MockOrderStatus } from "@/lib/mock/orders";
+import type { OrderWithItems } from "@/lib/queries/orders";
+import type { OrderStatus } from "@/lib/types/commerce";
 
 interface OrderDetailDialogProps {
   trigger: React.ReactNode;
-  order: MockOrder;
-  onStatusChange: (status: MockOrderStatus) => void;
+  order: OrderWithItems;
+  onStatusChange: (status: OrderStatus) => Promise<void>;
 }
 
 export function OrderDetailDialog({
@@ -31,9 +32,25 @@ export function OrderDetailDialog({
   onStatusChange,
 }: OrderDetailDialogProps) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleStatusChange = async (value: string) => {
+    setError(null);
+    try {
+      await onStatusChange(value as OrderStatus);
+    } catch {
+      setError("상태 변경 중 오류가 발생했습니다. 다시 시도해주세요.");
+    }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setError(null);
+      }}
+    >
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -56,29 +73,23 @@ export function OrderDetailDialog({
           </div>
           <div className="flex flex-col gap-2">
             {order.items.map((item) => (
-              <div
-                key={item.productId}
-                className="flex justify-between text-sm"
-              >
+              <div key={item.id} className="flex justify-between text-sm">
                 <span>
                   {item.productName} x {item.quantity}
                 </span>
-                <span>{formatCurrencyKRW(item.unitPrice * item.quantity)}</span>
+                <span>
+                  {formatCurrencyKRW(item.unit_price * item.quantity)}
+                </span>
               </div>
             ))}
             <div className="flex justify-between border-t pt-2 font-semibold">
               <span>합계</span>
-              <span>{formatCurrencyKRW(order.totalAmount)}</span>
+              <span>{formatCurrencyKRW(order.total_amount)}</span>
             </div>
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">배송 상태</span>
-            <Select
-              value={order.status}
-              onValueChange={(value) =>
-                onStatusChange(value as MockOrderStatus)
-              }
-            >
+            <Select value={order.status} onValueChange={handleStatusChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -90,6 +101,7 @@ export function OrderDetailDialog({
                 ))}
               </SelectContent>
             </Select>
+            {error && <p className="text-sm text-red-500">{error}</p>}
           </div>
         </div>
       </DialogContent>

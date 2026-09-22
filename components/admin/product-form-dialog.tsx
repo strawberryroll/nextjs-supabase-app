@@ -16,29 +16,63 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { productSchema, type ProductFormValues } from "@/lib/schemas/product";
-import type { MockProduct } from "@/lib/mock/products";
+import { uploadProductImage } from "@/lib/actions/products";
+import type { Product } from "@/lib/types/commerce";
 
 interface ProductFormProps {
-  product?: MockProduct;
-  onSubmit: (values: ProductFormValues) => void;
+  product?: Product;
+  onSubmit: (values: ProductFormValues) => Promise<void>;
 }
 
 function ProductForm({ product, onSubmit }: ProductFormProps) {
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    product?.image_url ?? null,
+  );
+
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
       name: product?.name ?? "",
       price: product?.price ?? 0,
-      stockQuantity: product?.stockQuantity ?? 0,
+      stockQuantity: product?.stock_quantity ?? 0,
       threshold: product?.threshold ?? 0,
       description: product?.description ?? "",
-      imageUrl: product?.imageUrl ?? "",
+      imageUrl: product?.image_url ?? "",
     },
   });
 
-  const handleSubmit = (values: ProductFormValues) => {
-    // TODO(Phase 3 Task 011): Server Action으로 products 테이블에 반영
-    onSubmit(values);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setImageFile(file);
+    setPreviewUrl(
+      file ? URL.createObjectURL(file) : (product?.image_url ?? null),
+    );
+  };
+
+  const handleSubmit = async (values: ProductFormValues) => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      let imageUrl = values.imageUrl;
+
+      // 새 파일을 선택했으면 업로드 후 그 URL을 사용하고, 선택하지 않았으면
+      // (수정 모드에서 이미지를 바꾸지 않은 경우) 기존 imageUrl을 그대로 둔다.
+      if (imageFile) {
+        const formData = new FormData();
+        formData.set("file", imageFile);
+        imageUrl = await uploadProductImage(formData);
+      }
+
+      await onSubmit({ ...values, imageUrl });
+    } catch {
+      setError("저장 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -123,24 +157,28 @@ function ProductForm({ product, onSubmit }: ProductFormProps) {
           </Field>
         )}
       />
-      <Controller
-        name="imageUrl"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel htmlFor="imageUrl">이미지 URL</FieldLabel>
-            <Input
-              {...field}
-              id="imageUrl"
-              placeholder="https://picsum.photos/seed/example/600/600"
-              aria-invalid={fieldState.invalid}
-            />
-            <FieldError errors={[fieldState.error]} />
-          </Field>
+      <Field>
+        <FieldLabel htmlFor="image">이미지</FieldLabel>
+        {previewUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- blob: 미리보기 URL은 next/image의 remotePatterns 대상이 아니라 일반 img로 렌더링한다.
+          <img
+            src={previewUrl}
+            alt="상품 이미지 미리보기"
+            className="bg-muted h-24 w-24 rounded-md object-cover"
+          />
         )}
-      />
+        <Input
+          id="image"
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+        />
+      </Field>
+      {error && <p className="text-sm text-red-500">{error}</p>}
       <DialogFooter>
-        <Button type="submit">{product ? "수정" : "등록"}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "저장 중..." : product ? "수정" : "등록"}
+        </Button>
       </DialogFooter>
     </form>
   );
@@ -148,8 +186,8 @@ function ProductForm({ product, onSubmit }: ProductFormProps) {
 
 interface ProductFormDialogProps {
   trigger: React.ReactNode;
-  product?: MockProduct;
-  onSubmit: (values: ProductFormValues) => void;
+  product?: Product;
+  onSubmit: (values: ProductFormValues) => Promise<void>;
 }
 
 export function ProductFormDialog({
@@ -170,8 +208,8 @@ export function ProductFormDialog({
           <ProductForm
             key={product?.id ?? "new"}
             product={product}
-            onSubmit={(values) => {
-              onSubmit(values);
+            onSubmit={async (values) => {
+              await onSubmit(values);
               setOpen(false);
             }}
           />
