@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
@@ -18,16 +19,47 @@ import {
 export function CheckoutForm() {
   const { items, totalPrice, clearCart } = useCart();
   const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ShippingFormValues>({
     resolver: zodResolver(shippingSchema),
     defaultValues: { recipient: "", address: "", phone: "" },
   });
 
-  const onSubmit = () => {
-    // TODO(Phase 3 Task 010): 토스페이먼츠 결제창 호출 및 결제 승인 연동
-    clearCart();
-    router.push("/orders/complete");
+  // 모의 결제: 실제 결제위젯 없이 배송정보와 장바구니 내역을 그대로
+  // /api/payments/confirm으로 보내 결제 승인 플로우를 검증한다.
+  const onSubmit = async (values: ShippingFormValues) => {
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/payments/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...values,
+          items: items.map((item) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const body = await res.json();
+
+      if (!res.ok) {
+        setError(body.error ?? "결제 처리 중 오류가 발생했습니다");
+        return;
+      }
+
+      clearCart();
+      router.push(`/orders/complete?orderId=${body.orderId}`);
+    } catch {
+      setError("결제 처리 중 오류가 발생했습니다");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0) {
@@ -93,7 +125,10 @@ export function CheckoutForm() {
             </Field>
           )}
         />
-        <Button type="submit">결제하기</Button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "처리 중..." : "결제하기"}
+        </Button>
       </form>
       <div className="flex flex-col gap-4 rounded-lg border p-4">
         <p className="font-semibold">주문 요약</p>
